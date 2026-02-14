@@ -1,0 +1,39 @@
+package com.exploreMate.auth_service.model;
+
+import lombok.*;
+
+import java.time.Instant;
+import java.util.Set;
+import java.util.UUID;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "users")
+public class UserAccount {
+    @Id
+    private String id;
+    @Indexed(unique = true)
+    private String email;
+    private String name;
+    private String passwordHash;
+    private Set<String> roles;
+    private boolean enabled;
+    private boolean locked;
+    private Instant lastLoginAt;
+    @CreatedDate
+    private Instant createdAt;
+    @LastModifiedDate
+    private Instant updatedAt;
+    @Version
+    private Long version;
+}
