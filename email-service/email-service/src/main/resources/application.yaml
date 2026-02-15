@@ -5,10 +5,16 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: exploremate13@gmail.com
-    password: Exploremate123##
+    password: tjxb duen vqgw lhpw # This MUST be a 16-character App Password, not your regular password
     properties:
       mail:
-        smpt:
+        smtp:
           auth: true
           starttls:
             enable: true
+            required: true # This forces the secure connection
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+server:
+  port: 9090
