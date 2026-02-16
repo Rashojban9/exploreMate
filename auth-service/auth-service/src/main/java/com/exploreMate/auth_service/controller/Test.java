@@ -15,13 +15,13 @@ public class Test
 
 {
     private final AuthRepo repo;
-    @GetMapping("/test")
+    @GetMapping("/public/test")
     public String test() {
         UserAccount user = UserAccount.builder()
 
                 .name("Test User")
-                .email("test@test.com")
-                .passwordHash("123")
+                .email("test2@test.com")
+                .passwordHash("1234")
                 .roles(Set.of("ROLE_USER"))
                 .enabled(true)
                 .locked(false)

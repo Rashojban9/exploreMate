@@ -3,10 +3,25 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      server:
+        webmvc:
+          routes:
+            - id: auth_public_route
+              uri: ${AUTH_SERVICE_URL:http://localhost:8080}
+              predicates:
+                - Path=/public/**
+              filters:
+                - PrefixPath=/api
+            - id: auth_route
+              uri: ${AUTH_SERVICE_URL:http://localhost:8080}
+              predicates:
+                - Path=/auth-service/**
+              filters:
+                - StripPrefix=1
       discovery:
         locator:
           lower-case-service-id: true
           enabled: true
 
 server:
-  port: 9090
+  port: 9080

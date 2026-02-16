@@ -1,9 +1,9 @@
-package com.exploreMate.email_service.service;
+package com.exploreMate.email_service.dto;
 
 import lombok.Data;
 
 @Data
-public class dto {
+public class EmailDto {
 
         private String toEmail;
         private String subject;

@@ -2,12 +2,13 @@ package com.exploreMate.api_gateway.jwt;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.context.annotation.Configuration;
 
 import javax.crypto.SecretKey;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
+@Configuration
 public class JwtUtils {
     private String SECRET_KEY="my_super_secret_key_that_is_very_long_1234567890";
     private SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
