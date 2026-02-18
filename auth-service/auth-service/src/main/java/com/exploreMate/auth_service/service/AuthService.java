@@ -26,6 +26,10 @@ public class AuthService {
     private final KafkaTemplate<String, KafkaResDto>kalkaTemplet;
 
     public String signup(SignupReqDto signupReqDto) {
+        ;
+        if(repo.findByEmail(signupReqDto.getEmail()).isPresent()){
+            throw new RuntimeException("User Already present");
+        }
 
         UserAccount user = mapper.toEntity(signupReqDto);
        user.setPasswordHash(passwordEncoder.encode(signupReqDto.getPassword()));
@@ -42,7 +46,8 @@ public class AuthService {
     public SigninResDto signin(SigninReqDto signinReqDto) {
        UserAccount user = repo.findByEmail(signinReqDto.email()).orElseThrow(()->new UsernameNotFoundException("Username or password didnot match"));
         if(!passwordEncoder.matches(signinReqDto.password(),user.getPasswordHash())){
-            throw new UsernameNotFoundException("Username or Password didnot match");
+              throw new UsernameNotFoundException("Username or Password didnot match");
+
 
         }
        return SigninResDto.builder().token(jwtUtils.generateToken(signinReqDto.email(),user.getRoles())).build();
