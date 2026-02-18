@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class EmailDto {
 
-        private String toEmail;
+        private String email;
         private String subject;
         private String body;
 

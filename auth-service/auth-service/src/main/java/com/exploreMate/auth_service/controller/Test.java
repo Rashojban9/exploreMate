@@ -14,20 +14,10 @@ import java.util.UUID;
 public class Test
 
 {
-    private final AuthRepo repo;
-    @GetMapping("/public/test")
+
+    @GetMapping("/test")
     public String test() {
-        UserAccount user = UserAccount.builder()
 
-                .name("Test User")
-                .email("test2@test.com")
-                .passwordHash("1234")
-                .roles(Set.of("ROLE_USER"))
-                .enabled(true)
-                .locked(false)
-                .build();
-
-        repo.save(user);
         return "Saved";
     }
 
