@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: trip-service
+  mongodb:
+    uri: "mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/exploremate?retryWrites=true&w=majority&appName=exploremate-dev"
+server:
+  port: 8083

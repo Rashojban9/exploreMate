@@ -4,7 +4,6 @@ import com.exploreMate.api_gateway.jwt.JwtFilterChain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,39 +22,23 @@ public class AppConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) {
         return httpSecurity.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(
-                        auth -> auth.requestMatchers(
-                                        HttpMethod.OPTIONS,
-                                        "/**"
-                                ).permitAll()
-                                .requestMatchers(
-                                        "/public/**",
-                                        "/auth-service/**",
-                                        "/api/public/**",
+                        auth ->auth.requestMatchers(
+                                        "/auth-service/**",        // Broadly allow anything starting with the service name
+                                        "/api/public/**",          // Allow the path AFTER StripPrefix has occurred
                                         "/eureka/**",
-                                        "/error",
-                                        "/favicon.ico",
-                                        "/api/swagger-ui.html",
-                                        "/api/swagger-ui/**",
-                                        "/api/api-docs/**",
-
-
-                                        "/swagger-ui.html",
-                                        "/swagger-ui/**",
-                                        "/api-docs/**",
-                                        "/v3/api-docs/**"
+                                        "/error",                  // Essential: permits the default error page
+                                        "/favicon.ico"
                                 ).permitAll().anyRequest()
                                 .authenticated())
-
+             
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilterChain, UsernamePasswordAuthenticationFilter.class).build();
 
     }
-
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
     @Bean
     public UserDetailsService userDetailsService() {
         return new InMemoryUserDetailsManager();
