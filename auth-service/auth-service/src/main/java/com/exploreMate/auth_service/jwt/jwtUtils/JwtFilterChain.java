@@ -5,7 +5,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,25 +28,25 @@ public class JwtFilterChain extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        String token=authHeader.substring(7);
-        try{
-            if(SecurityContextHolder.getContext().getAuthentication()!=null){
-                filterChain.doFilter(request,response);
+        String token = authHeader.substring(7);
+        try {
+            if (SecurityContextHolder.getContext().getAuthentication() != null) {
+                filterChain.doFilter(request, response);
                 return;
             }
-            if(!jwtUtils.validateToken(token)){
+            if (!jwtUtils.validateToken(token)) {
                 SecurityContextHolder.clearContext();
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
-            String userName=jwtUtils.extractUsername(token);
-            Set<String> roles=jwtUtils.extractRoles(token);
-            var authorities=roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
-            UsernamePasswordAuthenticationToken authToken=new UsernamePasswordAuthenticationToken(userName,null,authorities);
+            String userName = jwtUtils.extractUsername(token);
+            Set<String> roles = jwtUtils.extractRoles(token);
+            var authorities = roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userName, null, authorities);
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
-            filterChain.doFilter(request,response);
-        }catch (Exception e){
+            filterChain.doFilter(request, response);
+        } catch (Exception e) {
             SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }

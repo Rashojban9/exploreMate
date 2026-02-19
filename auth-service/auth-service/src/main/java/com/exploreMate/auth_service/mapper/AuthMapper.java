@@ -8,5 +8,6 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring")
 public interface AuthMapper {
     UserAccount toEntity(SignupReqDto signupReqDto);
-    SigninResDto toRes(UserAccount user);
+
+
 }

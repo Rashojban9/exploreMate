@@ -12,16 +12,19 @@ spring:
                 - Path=/public/**
               filters:
                 - PrefixPath=/api
+            - id: test_route
+              uri: ${AUTH_SERVICE_URL:http://localhost:8080}
+              predicates:
+                - Path=/test
+              filters:
+                - PrefixPath=/api
             - id: auth_route
               uri: ${AUTH_SERVICE_URL:http://localhost:8080}
               predicates:
                 - Path=/auth-service/**
               filters:
                 - StripPrefix=1
-      discovery:
-        locator:
-          lower-case-service-id: true
-          enabled: true
+                - PrefixPath=/api
 
 server:
   port: 9080

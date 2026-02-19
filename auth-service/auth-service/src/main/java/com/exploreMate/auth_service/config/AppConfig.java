@@ -14,16 +14,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 public class AppConfig {
     private final JwtFilterChain jwtFilterChain;
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity){
-        return httpSecurity.csrf(csrf->csrf.disable())
-                .authorizeHttpRequests(auth->auth.requestMatchers("/public/**", "/api/public/**", "/error","/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**","/api-docs/**","/auth-service/webjars/**").permitAll().anyRequest().authenticated())
-                .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) {
+        return httpSecurity.csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/public/**", "/api/public/**", "/error", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/api-docs/**", "/auth-service/webjars/**").permitAll().anyRequest().authenticated())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilterChain, UsernamePasswordAuthenticationFilter.class)
                 .build();
 
     }
-
 
 
 }

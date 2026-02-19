@@ -16,12 +16,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserDetailService implements UserDetailsService {
     private final AuthRepo repo;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserAccount user=repo.findByEmail(username).orElseThrow(()->new RuntimeException("user not found"));
+        UserAccount user = repo.findByEmail(username).orElseThrow(() -> new RuntimeException("user not found"));
 
         return User.withUsername(user.getEmail())
                 .password(user.getPasswordHash())
-                .authorities(user.getRoles().stream().map(role->new SimpleGrantedAuthority(role)).collect(Collectors.toList())).build();
+                .authorities(user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role)).collect(Collectors.toList())).build();
     }
 }

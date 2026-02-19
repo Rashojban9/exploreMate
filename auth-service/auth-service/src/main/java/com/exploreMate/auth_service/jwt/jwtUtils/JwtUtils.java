@@ -1,6 +1,5 @@
 package com.exploreMate.auth_service.jwt.jwtUtils;
 
-import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
@@ -13,26 +12,30 @@ import java.util.stream.Collectors;
 
 @Component
 public class JwtUtils {
-    private final String SECRET_KEY="my_super_secret_key_that_is_very_long_1234567890";
-    private SecretKey key= Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
-    private long expirationTime=86_400_000;
-    public String generateToken(String email, Set<String>role){
-        return Jwts.builder().setSubject(email).issuedAt(new Date()).expiration(new Date(System.currentTimeMillis()+expirationTime)).signWith(key).claim("roles",role).compact();
+    private final String SECRET_KEY = "my_super_secret_key_that_is_very_long_1234567890";
+    private SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    private long expirationTime = 86_400_000;
+
+    public String generateToken(String email, Set<String> role) {
+        return Jwts.builder().setSubject(email).issuedAt(new Date()).expiration(new Date(System.currentTimeMillis() + expirationTime)).signWith(key).claim("roles", role).compact();
     }
-    public String extractUsername(String token){
+
+    public String extractUsername(String token) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject();
     }
-    public boolean validateToken(String token){
-        try{
+
+    public boolean validateToken(String token) {
+        try {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject();
             return true;
-        }catch (Exception e){
+        } catch (Exception e) {
             return false;
         }
     }
-    public Set<String> extractRoles(String token){
-        Object roleObject= Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("role");
-        if(roleObject instanceof List<?> list){
+
+    public Set<String> extractRoles(String token) {
+        Object roleObject = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("role");
+        if (roleObject instanceof List<?> list) {
             return list.stream().map(String::valueOf).collect(Collectors.toSet());
 
         }

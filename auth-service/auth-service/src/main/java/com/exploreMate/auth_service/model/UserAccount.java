@@ -1,17 +1,15 @@
 package com.exploreMate.auth_service.model;
 
 import lombok.*;
-
-import java.time.Instant;
-import java.util.Set;
-import java.util.UUID;
-
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.Instant;
+import java.util.Set;
 
 @Getter
 @Setter

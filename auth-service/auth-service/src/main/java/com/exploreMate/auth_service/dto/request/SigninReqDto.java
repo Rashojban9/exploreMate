@@ -1,12 +1,11 @@
 package com.exploreMate.auth_service.dto.request;
 
-import lombok.*;
-
+import lombok.Builder;
 
 
 @Builder
 
-public record SigninReqDto( String email,
-         String password) {
+public record SigninReqDto(String email,
+                           String password) {
 
 }

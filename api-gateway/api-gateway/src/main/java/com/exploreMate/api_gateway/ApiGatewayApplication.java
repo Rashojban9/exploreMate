@@ -10,11 +10,12 @@ import org.springframework.web.client.RestClient;
 @EnableWebSecurity
 public class ApiGatewayApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ApiGatewayApplication.class, args);
-	}
-	@Bean
-	public RestClient.Builder restClientBuilder() {
-		return RestClient.builder();
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(ApiGatewayApplication.class, args);
+    }
+
+    @Bean
+    public RestClient.Builder restClientBuilder() {
+        return RestClient.builder();
+    }
 }
