@@ -30,21 +30,34 @@ public class UserAccount {
     private boolean enabled;
     private boolean locked;
     private Instant lastLoginAt;
+
+    // Profile additional fields
+    private String phoneNumber;
+    private String profilePicture;
+    private String bio;
+    private String title;
+    private String location;
+    private String dateOfBirth;
+    private java.util.List<String> interests;
+    private Integer budget;
+    private String travelStyle;
+
     @CreatedDate
     private Instant createdAt;
     @LastModifiedDate
     private Instant updatedAt;
     @Version
     private Long version;
-    
+
     public String getRole() {
-        if (role != null) return role;
+        if (role != null)
+            return role;
         if (roles != null && !roles.isEmpty()) {
             return roles.iterator().next();
         }
         return "USER";
     }
-    
+
     public Long getUserId() {
         return numericId != null ? numericId : (id != null ? (long) id.hashCode() : 0L);
     }
