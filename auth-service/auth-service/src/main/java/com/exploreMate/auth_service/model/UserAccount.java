@@ -25,6 +25,8 @@ public class UserAccount {
     private String name;
     private String passwordHash;
     private Set<String> roles;
+    private String role; // Single role for easier access
+    private Long numericId; // Numeric ID for API responses
     private boolean enabled;
     private boolean locked;
     private Instant lastLoginAt;
@@ -34,4 +36,16 @@ public class UserAccount {
     private Instant updatedAt;
     @Version
     private Long version;
+    
+    public String getRole() {
+        if (role != null) return role;
+        if (roles != null && !roles.isEmpty()) {
+            return roles.iterator().next();
+        }
+        return "USER";
+    }
+    
+    public Long getUserId() {
+        return numericId != null ? numericId : (id != null ? (long) id.hashCode() : 0L);
+    }
 }

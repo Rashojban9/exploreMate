@@ -16,7 +16,7 @@ public class JwtUtils {
     private SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     private long expirationTime = 86_400_000;
 
-    public String generateToken(String email, Set<String> role) {
+    public String generateToken(String email, List<String> role) {
         return Jwts.builder().setSubject(email).issuedAt(new Date()).expiration(new Date(System.currentTimeMillis() + expirationTime)).signWith(key).claim("roles", role).compact();
     }
 
@@ -34,11 +34,20 @@ public class JwtUtils {
     }
 
     public Set<String> extractRoles(String token) {
-        Object roleObject = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("role");
+        Object roleObject = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("roles");
         if (roleObject instanceof List<?> list) {
             return list.stream().map(String::valueOf).collect(Collectors.toSet());
 
         }
         return Set.of();
+    }
+    
+    public List<String> extractRolesAsList(String token) {
+        Object roleObject = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("roles");
+        if (roleObject instanceof List<?> list) {
+            return list.stream().map(String::valueOf).collect(Collectors.toList());
+
+        }
+        return List.of();
     }
 }

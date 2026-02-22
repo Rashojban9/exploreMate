@@ -18,6 +18,15 @@ public class JwtUtils {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject();
     }
 
+    public String extractEmail(String token) {
+        // Try to get email from claims, fallback to subject (username)
+        Object emailObj = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("email");
+        if (emailObj != null) {
+            return emailObj.toString();
+        }
+        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject();
+    }
+
     public boolean validateToken(String token) {
         try {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject();

@@ -1,0 +1,124 @@
+# Render Blueprint for ExploreMate Microservices
+# This file defines the services to be deployed on Render
+
+services:
+  # Service Discovery (Eureka)
+  - type: web
+    name: exploremate-service-discovery
+    env: docker
+    region: oregon
+    buildCommand: cd service-discovery/service-discovery && docker build -t service-discovery .
+    startCommand: docker run -p 8761:8761 service-discovery
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+    autoDeploy: true
+
+  # Auth Service
+  - type: web
+    name: exploremate-auth-service
+    env: docker
+    region: oregon
+    buildCommand: cd auth-service/auth-service && docker build -t auth-service .
+    startCommand: docker run -p 8080:8080 
+      --env SPRING_PROFILES_ACTIVE=prod 
+      --env SPRING_DATA_MONGODB_URI=$MONGODB_URI 
+      --env SPRING_KAFKA_BOOTSTRAP_SERVERS=$KAFKA_URI 
+      auth-service
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: MONGODB_URI
+        description: MongoDB connection string
+        sync: false
+      - key: KAFKA_URI
+        description: Kafka broker URL
+        sync: false
+    autoDeploy: true
+
+  # Trip Service
+  - type: web
+    name: exploremate-trip-service
+    env: docker
+    region: oregon
+    buildCommand: cd trip-service/trip-service && docker build -t trip-service .
+    startCommand: docker run -p 8083:8083 
+      --env SPRING_PROFILES_ACTIVE=prod 
+      --env SPRING_DATA_MONGODB_URI=$MONGODB_URI 
+      trip-service
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: MONGODB_URI
+        description: MongoDB connection string
+        sync: false
+    autoDeploy: true
+
+  # Email Service
+  - type: web
+    name: exploremate-email-service
+    env: docker
+    region: oregon
+    buildCommand: cd email-service/email-service && docker build -t email-service .
+    startCommand: docker run -p 9090:9090 
+      --env SPRING_PROFILES_ACTIVE=prod 
+      --env SPRING_KAFKA_BOOTSTRAP_SERVERS=$KAFKA_URI 
+      --env SPRING_MAIL_USERNAME=$EMAIL_USERNAME 
+      --env SPRING_MAIL_PASSWORD=$EMAIL_PASSWORD 
+      email-service
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: KAFKA_URI
+        description: Kafka broker URL
+        sync: false
+      - key: EMAIL_USERNAME
+        description: Gmail account for sending emails
+        sync: false
+      - key: EMAIL_PASSWORD
+        description: Gmail app password
+        sync: false
+    autoDeploy: true
+
+  # API Gateway
+  - type: web
+    name: exploremate-api-gateway
+    env: docker
+    region: oregon
+    buildCommand: cd api-gateway/api-gateway && docker build -t api-gateway .
+    startCommand: docker run -p 9080:9080 
+      --env SPRING_PROFILES_ACTIVE=prod 
+      --env AUTH_SERVICE_URL=http://auth-service:8080 
+      --env TRIP_SERVICE_URL=http://trip-service:8083 
+      --env EMAIL_SERVICE_URL=http://email-service:9090 
+      --env AI_SERVICE_URL=http://ai-service:9091 
+      api-gateway
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: AUTH_SERVICE_URL
+        value: http://auth-service:8080
+      - key: TRIP_SERVICE_URL
+        value: http://trip-service:8083
+      - key: EMAIL_SERVICE_URL
+        value: http://email-service:9090
+      - key: AI_SERVICE_URL
+        value: http://ai-service:9091
+    autoDeploy: true
+
+  # AI Service
+  - type: web
+    name: exploremate-ai-service
+    env: docker
+    region: oregon
+    buildCommand: cd ai-service/ai-service && docker build -t ai-service .
+    startCommand: docker run -p 9091:9091 
+      --env SPRING_PROFILES_ACTIVE=prod 
+      --env EUREKA_SERVER_URL=http://service-discovery:8761/eureka 
+      ai-service
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: EUREKA_SERVER_URL
+        value: http://service-discovery:8761/eureka
+    autoDeploy: true

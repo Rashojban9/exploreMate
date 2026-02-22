@@ -22,4 +22,9 @@ public class ApiResponse<T> {
         ApiResponse<T> body = new ApiResponse<T>(200, message, data, LocalDate.now());
         return ResponseEntity.status(200).body(body);
     }
+    
+    public static <T> ResponseEntity<ApiResponse<T>> error(String message) {
+        ApiResponse<T> body = new ApiResponse<T>(400, message, null, LocalDate.now());
+        return ResponseEntity.status(400).body(body);
+    }
 }

@@ -4,15 +4,13 @@ spring:
   mongodb:
     uri: "mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/exploremate?retryWrites=true&w=majority&appName=exploremate-dev"
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: kafka:9092
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 server:
   port: 8080
-  servlet:
-    context-path: /api
   forward-headers-strategy: framework
 springdoc:
   swagger-ui:
@@ -20,5 +18,8 @@ springdoc:
   api-docs:
     path: /api-docs
 eureka:
+  client:
+    service-url:
+      defaultZone: http://service-discovery:8761/eureka/
   instance:
     prefer-ip-address: true

@@ -6,16 +6,39 @@ spring:
       server:
         webmvc:
           routes:
+            # Auth routes - handles frontend /api/auth/** calls
+            - id: auth_api_route
+              uri: ${AUTH_SERVICE_URL:http://localhost:8080}
+              predicates:
+                - Path=/api/auth/**
+              filters:
+                - StripPrefix=1
+            # Trip routes - handles frontend /api/trips/** calls
+            - id: trip_api_route
+              uri: ${TRIP_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/trips/**
+              filters:
+                - StripPrefix=1
+            # Saved items routes
+            - id: saved_api_route
+              uri: ${TRIP_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/saved/**
+              filters:
+                - StripPrefix=1
+            # AI routes - handles frontend /api/ai/** calls
+            - id: ai_api_route
+              uri: ${AI_SERVICE_URL:http://localhost:9091}
+              predicates:
+                - Path=/api/ai/**
+              filters:
+                - StripPrefix=1
+            # Legacy routes for service-to-service communication
             - id: auth_public_route
               uri: ${AUTH_SERVICE_URL:http://localhost:8080}
               predicates:
                 - Path=/public/**
-              filters:
-                - PrefixPath=/api
-            - id: test_route
-              uri: ${AUTH_SERVICE_URL:http://localhost:8080}
-              predicates:
-                - Path=/test
               filters:
                 - PrefixPath=/api
             - id: auth_route
@@ -24,6 +47,24 @@ spring:
                 - Path=/auth-service/**
               filters:
                 - StripPrefix=1
+                - PrefixPath=/api
+            - id: trip_route
+              uri: ${TRIP_SERVICE_URL:http://localhost:8083}
+              predicates:
+                - Path=/trip-service/**
+              filters:
+                - StripPrefix=1
+            - id: email_route
+              uri: ${EMAIL_SERVICE_URL:http://localhost:9090}
+              predicates:
+                - Path=/email-service/**
+              filters:
+                - StripPrefix=1
+            - id: test_route
+              uri: ${AUTH_SERVICE_URL:http://localhost:8080}
+              predicates:
+                - Path=/test
+              filters:
                 - PrefixPath=/api
 
 server:
