@@ -72,8 +72,8 @@ RUN echo '#!/bin/bash' > /app/start.sh && \
     echo 'echo "Service Discovery PID: $SERVICE_PID"' >> /app/start.sh && \
     echo '' >> /app/start.sh && \
     echo '# Wait for Service Discovery to start' >> /app/start.sh && \
-    echo 'echo "Waiting for Service Discovery (30s)..."' >> /app/start.sh && \
-    echo 'sleep 30' >> /app/start.sh && \
+    echo 'echo "Waiting for Service Discovery (15s)..."' >> /app/start.sh && \
+    echo 'sleep 15' >> /app/start.sh && \
     echo '' >> /app/start.sh && \
     echo '# Start Auth Service in background' >> /app/start.sh && \
     echo 'echo "Starting Auth Service..."' >> /app/start.sh && \
@@ -92,8 +92,8 @@ RUN echo '#!/bin/bash' > /app/start.sh && \
     echo 'java -jar /app/services/ai-service.jar > /tmp/ai-service.log 2>&1 &' >> /app/start.sh && \
     echo '' >> /app/start.sh && \
     echo '# Wait for backend services' >> /app/start.sh && \
-    echo 'echo "Waiting for backend services (20s)..."' >> /app/start.sh && \
-    echo 'sleep 20' >> /app/start.sh && \
+    echo 'echo "Waiting for backend services (10s)..."' >> /app/start.sh && \
+    echo 'sleep 10' >> /app/start.sh && \
     echo '' >> /app/start.sh && \
     echo '# Start API Gateway in foreground (this keeps container running)' >> /app/start.sh && \
     echo 'echo "Starting API Gateway on port 9080..."' >> /app/start.sh && \
