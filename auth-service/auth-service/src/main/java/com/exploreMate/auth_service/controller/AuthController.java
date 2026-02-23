@@ -1,4 +1,4 @@
-package com.exploreMate.auth_service.controller;
+opackage com.exploreMate.auth_service.controller;
 
 import com.exploreMate.auth_service.dto.request.SigninReqDto;
 import com.exploreMate.auth_service.dto.request.SignupReqDto;

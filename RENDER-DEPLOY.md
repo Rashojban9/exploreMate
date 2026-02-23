@@ -26,23 +26,23 @@ First, tag and push your Docker images to Docker Hub:
 
 ```bash
 # Login to Docker Hub
-docker login -u YOUR_USERNAME
+docker login -u rashojban9
 
 # Tag images
-docker tag exploremate-api-gateway:latest YOUR_USERNAME/exploremate-api-gateway:latest
-docker tag exploremate-auth-service:latest YOUR_USERNAME/exploremate-auth-service:latest
-docker tag exploremate-trip-service:latest YOUR_USERNAME/exploremate-trip-service:latest
-docker tag exploremate-email-service:latest YOUR_USERNAME/exploremate-email-service:latest
-docker tag exploremate-ai-service:latest YOUR_USERNAME/exploremate-ai-service:latest
-docker tag exploremate-service-discovery:latest YOUR_USERNAME/exploremate-service-discovery:latest
+docker tag exploremate-api-gateway:latest rashojban9/exploremate-api-gateway:latest
+docker tag exploremate-auth-service:latest rashojban9/exploremate-auth-service:latest
+docker tag exploremate-trip-service:latest rashojban9/exploremate-trip-service:latest
+docker tag exploremate-email-service:latest rashojban9/exploremate-email-service:latest
+docker tag exploremate-ai-service:latest rashojban9/exploremate-ai-service:latest
+docker tag exploremate-service-discovery:latest rashojban9/exploremate-service-discovery:latest
 
 # Push images
-docker push YOUR_USERNAME/exploremate-api-gateway:latest
-docker push YOUR_USERNAME/exploremate-auth-service:latest
-docker push YOUR_USERNAME/exploremate-trip-service:latest
-docker push YOUR_USERNAME/exploremate-email-service:latest
-docker push YOUR_USERNAME/exploremate-ai-service:latest
-docker push YOUR_USERNAME/exploremate-service-discovery:latest
+docker push rashojban9/exploremate-api-gateway:latest
+docker push rashojban9/exploremate-auth-service:latest
+docker push rashojban9/exploremate-trip-service:latest
+docker push rashojban9/exploremate-email-service:latest
+docker push rashojban9/exploremate-ai-service:latest
+docker push rashojban9/exploremate-service-discovery:latest
 ```
 
 ### Step 2: Create Render Services
@@ -54,14 +54,14 @@ For each service, create a new **Private Service** on Render:
 
 #### Service Discovery (Eureka)
 - **Name**: exploremate-service-discovery
-- **Image URL**: YOUR_USERNAME/exploremate-service-discovery:latest
+- **Image URL**: rashojban9/exploremate-service-discovery:latest
 - **Port**: 8761
 - **Environment**: Docker
 - **Plan**: Starter (or your preferred plan)
 
 #### Auth Service
 - **Name**: exploremate-auth
-- **Image URL**: YOUR_USERNAME/exploremate-auth-service:latest
+- **Image URL**: rashojban9/exploremate-auth-service:latest
 - **Port**: 8080
 - **Environment Variables**:
   - `SPRING_PROFILES_ACTIVE`: prod
@@ -70,7 +70,7 @@ For each service, create a new **Private Service** on Render:
 
 #### Trip Service
 - **Name**: exploremate-trip
-- **Image URL**: YOUR_USERNAME/exploremate-trip-service:latest
+- **Image URL**: rashojban9/exploremate-trip-service:latest
 - **Port**: 8083
 - **Environment Variables**:
   - `SPRING_PROFILES_ACTIVE`: prod
@@ -79,7 +79,7 @@ For each service, create a new **Private Service** on Render:
 
 #### Email Service
 - **Name**: exploremate-email
-- **Image URL**: YOUR_USERNAME/exploremate-email-service:latest
+- **Image URL**: rashojban9/exploremate-email-service:latest
 - **Port**: 9090
 - **Environment Variables**:
   - `SPRING_PROFILES_ACTIVE`: prod
@@ -88,7 +88,7 @@ For each service, create a new **Private Service** on Render:
 
 #### AI Service
 - **Name**: exploremate-ai
-- **Image URL**: YOUR_USERNAME/exploremate-ai-service:latest
+- **Image URL**: rashojban9/exploremate-ai-service:latest
 - **Port**: 9091
 - **Environment Variables**:
   - `SPRING_PROFILES_ACTIVE`: prod
@@ -96,7 +96,7 @@ For each service, create a new **Private Service** on Render:
 
 #### API Gateway (Main Entry Point)
 - **Name**: exploremate-api-gateway
-- **Image URL**: YOUR_USERNAME/exploremate-api-gateway:latest
+- **Image URL**: rashojban9/exploremate-api-gateway:latest
 - **Port**: 9080
 - **Environment Variables**:
   - `SPRING_PROFILES_ACTIVE`: prod
