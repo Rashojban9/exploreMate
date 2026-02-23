@@ -4,7 +4,7 @@ services:
     name: exploremate-service-discovery
     env: docker
     region: oregon
-    dockerContext: service-discovery/service-discovery
+    dockerContext: .
     dockerFilePath: service-discovery/service-discovery/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
@@ -16,7 +16,7 @@ services:
     name: exploremate-auth-service
     env: docker
     region: oregon
-    dockerContext: auth-service/auth-service
+    dockerContext: .
     dockerFilePath: auth-service/auth-service/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
@@ -34,7 +34,7 @@ services:
     name: exploremate-trip-service
     env: docker
     region: oregon
-    dockerContext: trip-service/trip-service
+    dockerContext: .
     dockerFilePath: trip-service/trip-service/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
@@ -50,7 +50,7 @@ services:
     name: exploremate-email-service
     env: docker
     region: oregon
-    dockerContext: email-service/email-service
+    dockerContext: .
     dockerFilePath: email-service/email-service/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
@@ -68,7 +68,7 @@ services:
     name: exploremate-api-gateway
     env: docker
     region: oregon
-    dockerContext: api-gateway/api-gateway
+    dockerContext: .
     dockerFilePath: api-gateway/api-gateway/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
@@ -90,7 +90,7 @@ services:
     name: exploremate-ai-service
     env: docker
     region: oregon
-    dockerContext: ai-service/ai-service
+    dockerContext: .
     dockerFilePath: ai-service/ai-service/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
