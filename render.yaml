@@ -5,7 +5,7 @@ services:
     env: docker
     region: oregon
     dockerContext: service-discovery/service-discovery
-    dockerFilePath: Dockerfile
+    dockerFilePath: service-discovery/service-discovery/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
@@ -17,7 +17,7 @@ services:
     env: docker
     region: oregon
     dockerContext: auth-service/auth-service
-    dockerFilePath: Dockerfile
+    dockerFilePath: auth-service/auth-service/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
@@ -33,7 +33,7 @@ services:
     env: docker
     region: oregon
     dockerContext: trip-service/trip-service
-    dockerFilePath: Dockerfile
+    dockerFilePath: trip-service/trip-service/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
@@ -47,7 +47,7 @@ services:
     env: docker
     region: oregon
     dockerContext: email-service/email-service
-    dockerFilePath: Dockerfile
+    dockerFilePath: email-service/email-service/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
@@ -63,7 +63,7 @@ services:
     env: docker
     region: oregon
     dockerContext: api-gateway/api-gateway
-    dockerFilePath: Dockerfile
+    dockerFilePath: api-gateway/api-gateway/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
@@ -83,7 +83,7 @@ services:
     env: docker
     region: oregon
     dockerContext: ai-service/ai-service
-    dockerFilePath: Dockerfile
+    dockerFilePath: ai-service/ai-service/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
