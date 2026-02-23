@@ -1,102 +1,14 @@
+# ExploreMate - Render Deployment (Simplified for Free Tier)
+# Deploys API Gateway as a single web service
+
 services:
-  # Service Discovery (Eureka)
-  - type: pvt
-    name: exploremate-service-discovery
-    env: docker
-    region: oregon
-    dockerContext: .
-    dockerFilePath: service-discovery/service-discovery/Dockerfile
-    envVars:
-      - key: SPRING_PROFILES_ACTIVE
-        value: prod
-    autoDeploy: true
-
-  # Auth Service
-  - type: pvt
-    name: exploremate-auth-service
-    env: docker
-    region: oregon
-    dockerContext: .
-    dockerFilePath: auth-service/auth-service/Dockerfile
-    envVars:
-      - key: SPRING_PROFILES_ACTIVE
-        value: prod
-      - key: MONGODB_URI
-        sync: false
-      - key: JWT_SECRET
-        sync: false
-      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        value: http://exploremate-service-discovery:8761/eureka/
-    autoDeploy: true
-
-  # Trip Service
-  - type: pvt
-    name: exploremate-trip-service
-    env: docker
-    region: oregon
-    dockerContext: .
-    dockerFilePath: trip-service/trip-service/Dockerfile
-    envVars:
-      - key: SPRING_PROFILES_ACTIVE
-        value: prod
-      - key: MONGODB_URI
-        sync: false
-      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        value: http://exploremate-service-discovery:8761/eureka/
-    autoDeploy: true
-
-  # Email Service
-  - type: pvt
-    name: exploremate-email-service
-    env: docker
-    region: oregon
-    dockerContext: .
-    dockerFilePath: email-service/email-service/Dockerfile
-    envVars:
-      - key: SPRING_PROFILES_ACTIVE
-        value: prod
-      - key: EMAIL_USERNAME
-        sync: false
-      - key: EMAIL_PASSWORD
-        sync: false
-      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        value: http://exploremate-service-discovery:8761/eureka/
-    autoDeploy: true
-
-  # API Gateway (Public Entry Point)
   - type: web
-    name: exploremate-api-gateway
+    name: exploremate
     env: docker
     region: oregon
     dockerContext: .
-    dockerFilePath: api-gateway/api-gateway/Dockerfile
+    dockerFilePath: Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-      - key: AUTH_SERVICE_URL
-        value: http://exploremate-auth-service:8080
-      - key: TRIP_SERVICE_URL
-        value: http://exploremate-trip-service:8083
-      - key: EMAIL_SERVICE_URL
-        value: http://exploremate-email-service:9090
-      - key: AI_SERVICE_URL
-        value: http://exploremate-ai-service:9091
-      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        value: http://exploremate-service-discovery:8761/eureka/
-    autoDeploy: true
-
-  # AI Service
-  - type: pvt
-    name: exploremate-ai-service
-    env: docker
-    region: oregon
-    dockerContext: .
-    dockerFilePath: ai-service/ai-service/Dockerfile
-    envVars:
-      - key: SPRING_PROFILES_ACTIVE
-        value: prod
-      - key: EUREKA_SERVER_URL
-        value: http://exploremate-service-discovery:8761/eureka
-      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        value: http://exploremate-service-discovery:8761/eureka/
     autoDeploy: true

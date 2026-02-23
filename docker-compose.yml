@@ -1,82 +1,72 @@
+# ExploreMate - Railway Deployment
+# Railway has better free tier - supports docker-compose deployment
+
 services:
   # Service Discovery (Eureka)
   service-discovery:
-    build:
-      context: ./service-discovery/service-discovery
-      dockerfile: Dockerfile
-    container_name: exploremate-service-discovery
+    build: ./service-discovery/service-discovery
     ports:
       - "8761:8761"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-    restart: unless-stopped
-    networks:
-      - exploremate-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   # Auth Service
   auth-service:
-    build:
-      context: ./auth-service/auth-service
-      dockerfile: Dockerfile
-    container_name: exploremate-auth-service
+    build: ./auth-service/auth-service
     ports:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATA_MONGODB_URI=${MONGODB_URI:-mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/exploremate?retryWrites=true&w=majority}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
     depends_on:
       - service-discovery
-      - kafka
-    restart: unless-stopped
-    networks:
-      - exploremate-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   # Trip Service
   trip-service:
-    build:
-      context: ./trip-service/trip-service
-      dockerfile: Dockerfile
-    container_name: exploremate-trip-service
+    build: ./trip-service/trip-service
     ports:
       - "8083:8083"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATA_MONGODB_URI=${MONGODB_URI:-mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/exploremate?retryWrites=true&w=majority}
+      - MONGODB_URI=${MONGODB_URI}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
     depends_on:
       - service-discovery
-    restart: unless-stopped
-    networks:
-      - exploremate-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   # Email Service
   email-service:
-    build:
-      context: ./email-service/email-service
-      dockerfile: Dockerfile
-    container_name: exploremate-email-service
+    build: ./email-service/email-service
     ports:
       - "9090:9090"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - SPRING_MAIL_USERNAME=${EMAIL_USERNAME:-exploremate13@gmail.com}
-      - SPRING_MAIL_PASSWORD=${EMAIL_PASSWORD:-tjxb duen vqgw lhpw}
+      - SPRING_MAIL_USERNAME=${EMAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${EMAIL_PASSWORD}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
     depends_on:
-      - kafka
-    restart: unless-stopped
-    networks:
-      - exploremate-network
+      - service-discovery
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   # API Gateway
   api-gateway:
-    build:
-      context: ./api-gateway/api-gateway
-      dockerfile: Dockerfile
-    container_name: exploremate-api-gateway
+    build: ./api-gateway/api-gateway
     ports:
       - "9080:9080"
     environment:
@@ -89,55 +79,23 @@ services:
     depends_on:
       - service-discovery
       - auth-service
-    restart: unless-stopped
-    networks:
-      - exploremate-network
+      - trip-service
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   # AI Service
   ai-service:
-    build:
-      context: ./ai-service/ai-service
-      dockerfile: Dockerfile
-    container_name: exploremate-ai-service
+    build: ./ai-service/ai-service
     ports:
       - "9091:9091"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - EUREKA_SERVER_URL=http://service-discovery:8761/eureka
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
     depends_on:
       - service-discovery
-    restart: unless-stopped
-    networks:
-      - exploremate-network
-
-  # Kafka and Zookeeper
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: exploremate-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - exploremate-network
-
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: exploremate-kafka
-    depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    networks:
-      - exploremate-network
-
-networks:
-  exploremate-network:
-    driver: bridge
+    deploy:
+      resources:
+        limits:
+          memory: 512M
