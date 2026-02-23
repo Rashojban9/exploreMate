@@ -22,7 +22,8 @@ public class JwtFilterChain extends OncePerRequestFilter {
     private final JwtUtils jwtUtils;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
         String path = request.getServletPath();
         if (path.contains("/public/") || path.contains("/auth-service/") || path.contains("/api/auth/")) {
             filterChain.doFilter(request, response);
@@ -48,31 +49,32 @@ public class JwtFilterChain extends OncePerRequestFilter {
             String email = jwtUtils.extractEmail(token);
             Set<String> roles = jwtUtils.extractRoles(token);
             var authorities = roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, null, authorities);
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, null,
+                    authorities);
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
-            
+
             // Add X-User-Email header for trip and saved item routes
             if (path.contains("/api/trips") || path.contains("/api/saved")) {
                 request = new HttpServletRequestWrapper(request, email);
             }
-            
+
             filterChain.doFilter(request, response);
         } catch (Exception e) {
             SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
     }
-    
+
     // Inner class to wrap request with custom header
     private static class HttpServletRequestWrapper extends jakarta.servlet.http.HttpServletRequestWrapper {
         private final String email;
-        
+
         public HttpServletRequestWrapper(HttpServletRequest request, String email) {
             super(request);
             this.email = email;
         }
-        
+
         @Override
         public String getHeader(String name) {
             if ("X-User-Email".equals(name)) {
@@ -80,5 +82,24 @@ public class JwtFilterChain extends OncePerRequestFilter {
             }
             return super.getHeader(name);
         }
+
+        @Override
+
+        public java.util.Enumeration<String> getHeaderNames() {
+            java.util.List<String> names = java.util.Collections.list(super.getHeaderNames());
+            if (!names.contains("X-User-Email")) {
+                names.add("X-User-Email");
+            }
+            return java.util.Collections.enumeration(names);
+        }
+
+        @Override
+        public java.util.Enumeration<String> getHeaders(String name) {
+            if ("X-User-Email".equals(name)) {
+                return java.util.Collections.enumeration(java.util.Collections.singletonList(email));
+            }
+            return super.getHeaders(name);
+        }
+
     }
 }

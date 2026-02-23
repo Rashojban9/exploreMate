@@ -25,6 +25,9 @@ public class Trip {
     private String placeDescription;
     private List<String> placePhotos;
     private String userEmail;
+    private String startDate;
+    private String endDate;
+    private String status; // UPCOMING, DRAFT, PAST
     private Instant createdAt;
     private Instant updatedAt;
 }

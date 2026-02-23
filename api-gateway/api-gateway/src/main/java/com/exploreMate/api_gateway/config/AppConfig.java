@@ -25,73 +25,79 @@ import java.util.List;
 @RequiredArgsConstructor
 @EnableMethodSecurity
 public class AppConfig {
-    private final JwtFilterChain jwtFilterChain;
+        private final JwtFilterChain jwtFilterChain;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        return httpSecurity
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(auth -> auth
-                        // ── Public endpoints (no token needed) ──────────────────
-                        .requestMatchers(
-                                "/auth/**", // auth-service: login, signup, register
-                                "/api/auth/**", // backward-compat prefix
-                                "/auth-service/**",
-                                "/api/public/**",
-                                "/error",
-                                "/favicon.ico",
-                                "/eureka/**",
-                                "/actuator/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**")
-                        .permitAll()
-                        // ── Admin-only endpoints ────────────────────────────────
-                        .requestMatchers(
-                                "/api/admin/**",
-                                "/admin/**",
-                                "/auth/admin/**")
-                        .hasAuthority("ADMIN")
-                        // ── Authenticated user endpoints ────────────────────────
-                        .requestMatchers(
-                                "/trips/**",
-                                "/saved/**",
-                                "/api/trips/**",
-                                "/api/saved/**",
-                                "/api/ai/**",
-                                "/auth/me",
-                                "/auth/profile",
-                                "/api/auth/me",
-                                "/api/auth/profile")
-                        .authenticated()
-                        .anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtFilterChain, UsernamePasswordAuthenticationFilter.class)
-                .build();
-    }
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+                return httpSecurity
+                                .csrf(csrf -> csrf.disable())
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                .authorizeHttpRequests(auth -> auth
+                                                // ── Public endpoints (no token needed) ──────────────────
+                                                .requestMatchers(
+                                                                "/auth/**", // auth-service: login, signup, register
+                                                                "/api/auth/**", // backward-compat prefix
+                                                                "/auth-service/**",
+                                                                "/api/public/**",
+                                                                "/error",
+                                                                "/favicon.ico",
+                                                                "/eureka/**",
+                                                                "/actuator/**",
+                                                                "/swagger-ui/**",
+                                                                "/v3/api-docs/**")
+                                                .permitAll()
+                                                // ── Admin-only endpoints ────────────────────────────────
+                                                .requestMatchers(
+                                                                "/api/admin/**",
+                                                                "/admin/**",
+                                                                "/auth/admin/**")
+                                                .hasAuthority("ADMIN")
+                                                // ── Authenticated user endpoints ────────────────────────
+                                                .requestMatchers(
+                                                                "/trips/**",
+                                                                "/saved/**",
+                                                                "/api/trips/**",
+                                                                "/api/saved/**",
+                                                                "/api/ai/**",
+                                                                "/auth/me",
+                                                                "/auth/profile",
+                                                                "/api/auth/me",
+                                                                "/api/auth/profile")
+                                                .authenticated()
+                                                .anyRequest().authenticated())
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .addFilterBefore(jwtFilterChain, UsernamePasswordAuthenticationFilter.class)
+                                .build();
+        }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174",
-                "http://localhost:3000", "http://127.0.0.1:5173"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration configuration = new CorsConfiguration();
+                // Allow localhost and any vercel.app domains
+                configuration.setAllowedOriginPatterns(List.of(
+                                "http://localhost:5173",
+                                "http://localhost:5174",
+                                "http://localhost:3000",
+                                "http://127.0.0.1:5173",
+                                "https://*.vercel.app"));
+                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+                configuration.setAllowedHeaders(List.of("*"));
+                configuration.setAllowCredentials(true);
+                configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
+                return source;
+        }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+                return config.getAuthenticationManager();
+        }
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return new InMemoryUserDetailsManager();
-    }
+        @Bean
+        public UserDetailsService userDetailsService() {
+                return new InMemoryUserDetailsManager();
+        }
 }

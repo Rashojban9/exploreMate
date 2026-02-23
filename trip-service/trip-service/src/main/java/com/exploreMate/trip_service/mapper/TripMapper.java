@@ -16,6 +16,9 @@ public class TripMapper {
                 .placeDescription(trip.getPlaceDescription())
                 .placePhotos(trip.getPlacePhotos())
                 .userEmail(trip.getUserEmail())
+                .startDate(trip.getStartDate())
+                .endDate(trip.getEndDate())
+                .status(trip.getStatus())
                 .createdAt(trip.getCreatedAt())
                 .updatedAt(trip.getUpdatedAt())
                 .build();

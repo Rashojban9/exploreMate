@@ -35,6 +35,9 @@ public class TripService {
                 .placeDescription(request.getPlaceDescription())
                 .placePhotos(request.getPlacePhotos())
                 .userEmail(userEmail)
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
+                .status(request.getStatus() != null ? request.getStatus().toUpperCase() : "UPCOMING")
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
@@ -67,6 +70,11 @@ public class TripService {
         trip.setPlaceName(request.getPlaceName());
         trip.setPlaceDescription(request.getPlaceDescription());
         trip.setPlacePhotos(request.getPlacePhotos());
+        trip.setStartDate(request.getStartDate());
+        trip.setEndDate(request.getEndDate());
+        if (request.getStatus() != null) {
+            trip.setStatus(request.getStatus().toUpperCase());
+        }
         trip.setUpdatedAt(Instant.now());
 
         Trip updatedTrip = tripRepository.save(trip);

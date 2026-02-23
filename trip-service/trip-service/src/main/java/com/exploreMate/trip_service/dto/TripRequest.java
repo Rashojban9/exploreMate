@@ -15,13 +15,19 @@ import java.util.List;
 public class TripRequest {
     @NotBlank(message = "Trip name is required")
     private String tripName;
-    
+
     private String tripDescription;
-    
+
     @NotBlank(message = "Place name is required")
     private String placeName;
-    
+
     private String placeDescription;
-    
+
     private List<String> placePhotos;
+
+    private String startDate;
+
+    private String endDate;
+
+    private String status;
 }

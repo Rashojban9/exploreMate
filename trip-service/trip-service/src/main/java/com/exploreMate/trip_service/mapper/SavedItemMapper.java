@@ -28,7 +28,7 @@ public class SavedItemMapper {
         return SavedItemResponse.builder()
                 .id(Long.parseLong(savedItem.getId()))
                 .type(savedItem.getType())
-                .title(savedItem.getTitle())
+            .title(savedItem.getTitle())
                 .location(savedItem.getLocation())
                 .imageUrl(savedItem.getImageUrl())
                 .description(savedItem.getDescription())

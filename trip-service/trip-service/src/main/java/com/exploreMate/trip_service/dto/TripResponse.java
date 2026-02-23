@@ -21,6 +21,9 @@ public class TripResponse {
     private String placeDescription;
     private List<String> placePhotos;
     private String userEmail;
+    private String startDate;
+    private String endDate;
+    private String status;
     private Instant createdAt;
     private Instant updatedAt;
 }
