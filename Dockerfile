@@ -47,6 +47,9 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+# Install curl and bash
+RUN apk add --no-cache curl bash
+
 # Create directories for each service
 RUN mkdir -p /app/services
 
@@ -58,23 +61,47 @@ COPY --from=builder /build/trip-service/target/*.jar /app/services/trip-service.
 COPY --from=builder /build/email-service/target/*.jar /app/services/email-service.jar
 COPY --from=builder /build/ai-service/target/*.jar /app/services/ai-service.jar
 
-# Install curl for health checks
-RUN apk add --no-cache curl bash
-
-# Create startup script
+# Create startup script that runs API Gateway in foreground
 RUN echo '#!/bin/bash' > /app/start.sh && \
     echo 'echo "Starting ExploreMate Services..."' >> /app/start.sh && \
-    echo 'java -jar /app/services/service-discovery.jar &' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start Service Discovery (Eureka) in background' >> /app/start.sh && \
+    echo 'echo "Starting Service Discovery..."' >> /app/start.sh && \
+    echo 'java -jar /app/services/service-discovery.jar > /tmp/service-discovery.log 2>&1 &' >> /app/start.sh && \
+    echo 'SERVICE_PID=$!' >> /app/start.sh && \
+    echo 'echo "Service Discovery PID: $SERVICE_PID"' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Wait for Service Discovery to start' >> /app/start.sh && \
+    echo 'echo "Waiting for Service Discovery (30s)..."' >> /app/start.sh && \
     echo 'sleep 30' >> /app/start.sh && \
-    echo 'java -jar /app/services/auth-service.jar &' >> /app/start.sh && \
-    echo 'java -jar /app/services/trip-service.jar &' >> /app/start.sh && \
-    echo 'java -jar /app/services/email-service.jar &' >> /app/start.sh && \
-    echo 'java -jar /app/services/ai-service.jar &' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start Auth Service in background' >> /app/start.sh && \
+    echo 'echo "Starting Auth Service..."' >> /app/start.sh && \
+    echo 'java -jar /app/services/auth-service.jar > /tmp/auth-service.log 2>&1 &' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start Trip Service in background' >> /app/start.sh && \
+    echo 'echo "Starting Trip Service..."' >> /app/start.sh && \
+    echo 'java -jar /app/services/trip-service.jar > /tmp/trip-service.log 2>&1 &' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start Email Service in background' >> /app/start.sh && \
+    echo 'echo "Starting Email Service..."' >> /app/start.sh && \
+    echo 'java -jar /app/services/email-service.jar > /tmp/email-service.log 2>&1 &' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start AI Service in background' >> /app/start.sh && \
+    echo 'echo "Starting AI Service..."' >> /app/start.sh && \
+    echo 'java -jar /app/services/ai-service.jar > /tmp/ai-service.log 2>&1 &' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Wait for backend services' >> /app/start.sh && \
+    echo 'echo "Waiting for backend services (20s)..."' >> /app/start.sh && \
+    echo 'sleep 20' >> /app/start.sh && \
+    echo '' >> /app/start.sh && \
+    echo '# Start API Gateway in foreground (this keeps container running)' >> /app/start.sh && \
+    echo 'echo "Starting API Gateway on port 9080..."' >> /app/start.sh && \
     echo 'java -jar /app/services/api-gateway.jar' >> /app/start.sh && \
     chmod +x /app/start.sh
 
-# Expose ports (API Gateway is the main entry point)
+# Expose API Gateway port
 EXPOSE 9080
 
-# Run the API Gateway (main service)
+# Run the startup script
 CMD ["/app/start.sh"]
