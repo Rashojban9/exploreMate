@@ -25,6 +25,8 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
+      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        value: http://exploremate-service-discovery:8761/eureka/
     autoDeploy: true
 
   # Trip Service
@@ -39,6 +41,8 @@ services:
         value: prod
       - key: MONGODB_URI
         sync: false
+      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        value: http://exploremate-service-discovery:8761/eureka/
     autoDeploy: true
 
   # Email Service
@@ -55,6 +59,8 @@ services:
         sync: false
       - key: EMAIL_PASSWORD
         sync: false
+      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        value: http://exploremate-service-discovery:8761/eureka/
     autoDeploy: true
 
   # API Gateway (Public Entry Point)
@@ -75,6 +81,8 @@ services:
         value: http://exploremate-email-service:9090
       - key: AI_SERVICE_URL
         value: http://exploremate-ai-service:9091
+      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        value: http://exploremate-service-discovery:8761/eureka/
     autoDeploy: true
 
   # AI Service
@@ -89,4 +97,6 @@ services:
         value: prod
       - key: EUREKA_SERVER_URL
         value: http://exploremate-service-discovery:8761/eureka
+      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        value: http://exploremate-service-discovery:8761/eureka/
     autoDeploy: true

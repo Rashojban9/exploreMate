@@ -8,4 +8,10 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 9091
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# Run the application with JVM memory limits optimized for 512MB container
+# -Xmx192m: Max heap 192MB
+# -Xms128m: Initial heap 128MB
+# -XX:MaxMetaspaceSize=64m: Limit metaspace
+# -XX:+UseG1GC: Use G1 garbage collector for smaller footprint
+ENTRYPOINT ["java", "-Xmx192m", "-Xms128m", "-XX:MaxMetaspaceSize=64m", "-XX:+UseG1GC", "-jar", "app.jar"]
