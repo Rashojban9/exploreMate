@@ -1,0 +1,18 @@
+FROM nvidia/cuda:12.4.0-base-ubuntu22.04
+
+# Install curl and wget
+RUN apt-get update && apt-get install -y curl wget
+
+# Download and install Ollama binary directly (more reliable)
+RUN wget https://ollama.ai/download/ollama-linux-amd64.tar.gz && \
+    tar -xzf ollama-linux-amd64.tar.gz && \
+    mv ollama-linux-amd64 /usr/local/bin/ollama && \
+    rm ollama-linux-amd64.tar.gz
+
+# Set environment
+ENV OLLAMA_HOST=0.0.0.0:8080
+
+EXPOSE 8080
+
+# Keep container running
+CMD ["sh", "-c", "ollama serve & sleep infinity"]

@@ -38,3 +38,9 @@ spring:
           writetimeout: 5000
 server:
   port: 9090
+eureka:
+  client:
+    service-url:
+      defaultZone: http://service-discovery:8761/eureka/
+  instance:
+    prefer-ip-address: true

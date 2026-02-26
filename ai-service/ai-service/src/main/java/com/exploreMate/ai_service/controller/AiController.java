@@ -2,71 +2,167 @@ package com.exploreMate.ai_service.controller;
 
 import com.exploreMate.ai_service.dto.AiSuggestionRequest;
 import com.exploreMate.ai_service.dto.AiSuggestionResponse;
-import org.springframework.http.ResponseEntity;
+import com.exploreMate.ai_service.service.ConversationHistoryService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.Random;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/ai")
 public class AiController {
 
-    private final Random random = new Random();
+    private final ConversationHistoryService conversationHistoryService;
+
+    // Groq API configuration
+    @Value("${groq.api-key:${GROQ_API_KEY:}}")
+    private String groqApiKey;
+
+    // Using llama-3.3-70b-versatile model for travel advice
+    @Value("${groq.model:llama-3.3-70b-versatile}")
+    private String modelName;
+
+    private final RestTemplate restTemplate;
+
+    public AiController(RestTemplateBuilder restTemplateBuilder, 
+                        ConversationHistoryService conversationHistoryService) {
+        this.restTemplate = restTemplateBuilder
+                .setConnectTimeout(Duration.ofSeconds(10))
+                .setReadTimeout(Duration.ofSeconds(60))
+                .build();
+        this.conversationHistoryService = conversationHistoryService;
+    }
 
     @PostMapping("/suggestion")
     public ResponseEntity<AiSuggestionResponse> getSuggestion(@RequestBody AiSuggestionRequest request) {
-        String prompt = request.getPrompt().toLowerCase();
+        String userPrompt = request.getPrompt();
         
-        String suggestion = generateSuggestion(prompt);
+        // Get session ID or generate a new one
+        String sessionId = request.getSessionId();
+        if (sessionId == null || sessionId.isEmpty()) {
+            sessionId = UUID.randomUUID().toString();
+        }
         
-        return ResponseEntity.ok(new AiSuggestionResponse(suggestion, true));
+        // Check if user wants to clear history
+        if (request.getClearHistory() != null && request.getClearHistory()) {
+            conversationHistoryService.clearHistory(sessionId);
+        }
+        
+        // Get conversation history
+        List<Map<String, String>> conversationMessages = conversationHistoryService.getHistoryAsList(sessionId);
+        
+        // Enhance the prompt for better travel tips
+        String systemPrompt = """
+            You are ExploreMate AI, a friendly and helpful travel assistant for the ExploreMate travel app.
+            
+            When users greet you with "hello", "hi", or similar greetings, respond with:
+            "Namaste! Welcome to ExploreMate, your AI travel companion. I'm here to help you plan amazing trips, discover hidden gems, and find the best local experiences in Nepal and beyond! How can I help you today?"
+            
+            For travel advice, provide helpful, detailed recommendations.
+            Be friendly, concise, and focused on helping users plan their perfect trip.
+            """;;
+        
+        // Build messages list with history
+        List<Map<String, String>> messages = new ArrayList<>();
+        
+        // Add system message
+        messages.add(Map.of("role", "system", "content", systemPrompt));
+        
+        // Add conversation history
+        messages.addAll(conversationMessages);
+        
+        // Add current user message
+        messages.add(Map.of("role", "user", "content", userPrompt));
+        
+        // Call Groq API with conversation history
+        String aiResponse = callGroqWithHistory(messages);
+        
+        // Save conversation to history
+        conversationHistoryService.addUserMessage(sessionId, userPrompt);
+        conversationHistoryService.addAssistantMessage(sessionId, aiResponse);
+        
+        return ResponseEntity.ok(new AiSuggestionResponse(aiResponse, false));
+    }
+    
+    @PostMapping("/clear")
+    public ResponseEntity<Map<String, String>> clearConversation(@RequestBody AiSuggestionRequest request) {
+        String sessionId = request.getSessionId();
+        if (sessionId != null && !sessionId.isEmpty()) {
+            conversationHistoryService.clearHistory(sessionId);
+            return ResponseEntity.ok(Map.of("message", "Conversation history cleared"));
+        }
+        return ResponseEntity.badRequest().body(Map.of("error", "Session ID required"));
+    }
+    
+    @GetMapping("/history/{sessionId}")
+    public ResponseEntity<List<Map<String, String>>> getConversationHistory(@PathVariable String sessionId) {
+        List<Map<String, String>> history = conversationHistoryService.getHistoryAsList(sessionId);
+        return ResponseEntity.ok(history);
+    }
+    
+    @GetMapping("/conversations")
+    public ResponseEntity<List<Map<String, Object>>> getAllConversations() {
+        List<Map<String, Object>> conversations = conversationHistoryService.getAllConversations();
+        return ResponseEntity.ok(conversations);
     }
 
-    private String generateSuggestion(String prompt) {
-        // Simulated AI suggestions based on user prompts
-        if (prompt.contains("trip") || prompt.contains("travel") || prompt.contains("destination")) {
-            String[] tripSuggestions = {
-                "Based on your interests, I recommend visiting the mountains for a peaceful retreat. The scenic views and fresh air will rejuvenate your spirit.",
-                "Consider exploring coastal areas with beautiful beaches. Water activities and sunset walks could be wonderful experiences.",
-                "A cultural heritage tour could be enriching. Visit historical sites and museums to learn about local traditions.",
-                "Adventure tourism might interest you. Try hiking, rock climbing, or zip-lining for an adrenaline rush.",
-                "A rural countryside escape offers tranquility. Enjoy farm stays, local cuisine, and nature walks."
-            };
-            return tripSuggestions[random.nextInt(tripSuggestions.length)];
-        } 
-        else if (prompt.contains("itinerary") || prompt.contains("plan") || prompt.contains("schedule")) {
-            String[] itinerarySuggestions = {
-                "Start your day early with a hearty breakfast, then visit the main attractions. Take a break for lunch at a local restaurant. In the afternoon, explore neighborhoods and markets. End the day with dinner and entertainment.",
-                "For a balanced trip, allocate mornings for outdoor activities, afternoons for indoor attractions, and evenings for relaxation or cultural experiences.",
-                "Consider a flexible schedule with buffer time. Don't overplan - leave room for spontaneous discoveries and rest."
-            };
-            return itinerarySuggestions[random.nextInt(itinerarySuggestions.length)];
-        }
-        else if (prompt.contains("budget") || prompt.contains("cost") || prompt.contains("cheap")) {
-            String[] budgetSuggestions = {
-                "Travel during off-season for better deals. Book accommodations in advance and consider hostels or budget hotels.",
-                "Use public transportation instead of taxis. Eat at local street food stalls and markets for affordable meals.",
-                "Look for free attractions and walking tours. Many cities offer free entry to museums on specific days."
-            };
-            return budgetSuggestions[random.nextInt(budgetSuggestions.length)];
-        }
-        else if (prompt.contains("food") || prompt.contains("restaurant") || prompt.contains("cuisine")) {
-            String[] foodSuggestions = {
-                "Explore local street food for authentic flavors. Don't miss the regional specialties - they're often the most delicious and affordable.",
-                "Find restaurants away from tourist areas for better prices and authentic experiences. Ask locals for recommendations.",
-                "Consider cooking some meals yourself if you have kitchen access. Visit local grocery stores for fresh ingredients."
-            };
-            return foodSuggestions[random.nextInt(foodSuggestions.length)];
-        }
-        else {
-            String[] generalSuggestions = {
-                "Travel is about exploration and discovery. Be open to new experiences, meet locals, and embrace the unexpected.",
-                "Pack light and travel smart. Bring comfortable shoes, a good camera, and an open mind.",
-                "Document your journey through photos and journal. These memories will be priceless.",
-                "Stay connected with loved ones but also take time to disconnect and fully immerse yourself in the experience.",
-                "Remember: the journey is as important as the destination. Enjoy every moment!"
-            };
-            return generalSuggestions[random.nextInt(generalSuggestions.length)];
+    private String callGroqWithHistory(List<Map<String, String>> messages) {
+        try {
+            String apiKey = groqApiKey;
+            
+            // Also check environment variable
+            if (apiKey == null || apiKey.isEmpty()) {
+                apiKey = System.getenv("GROQ_API_KEY");
+            }
+            
+            if (apiKey == null || apiKey.isEmpty()) {
+                return "Error: GROQ_API_KEY not configured. Please set the GROQ_API_KEY environment variable.";
+            }
+            
+            String url = "https://api.groq.com/openai/v1/chat/completions";
+            System.out.println("Calling Groq API with model: " + modelName);
+            System.out.println("Number of messages in conversation: " + messages.size());
+            
+            Map<String, Object> requestBody = Map.of(
+                "model", modelName,
+                "messages", messages,
+                "temperature", 0.7,
+                "max_tokens", 1024,
+                "top_p", 0.9
+            );
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(apiKey);
+            
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = restTemplate.postForObject(url, entity, Map.class);
+            
+            if (response != null && response.get("choices") != null) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+                if (!choices.isEmpty()) {
+                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                    if (message != null && message.get("content") != null) {
+                        return message.get("content").toString();
+                    }
+                }
+            }
+            
+            return "I apologize, but I couldn't generate a response at this moment. Please try again.";
+            
+        } catch (Exception e) {
+            return "AI service error: " + e.getMessage();
         }
     }
 }

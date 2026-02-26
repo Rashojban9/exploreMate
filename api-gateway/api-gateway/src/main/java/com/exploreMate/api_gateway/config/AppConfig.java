@@ -39,6 +39,7 @@ public class AppConfig {
                                                                 "/api/auth/**", // backward-compat prefix
                                                                 "/auth-service/**",
                                                                 "/api/public/**",
+                                                                "/api/ai/**", // AI service - public for now
                                                                 "/error",
                                                                 "/favicon.ico",
                                                                 "/eureka/**",
@@ -80,7 +81,9 @@ public class AppConfig {
                                 "http://localhost:5174",
                                 "http://localhost:3000",
                                 "http://127.0.0.1:5173",
-                                "https://*.vercel.app"));
+                                "https://*.vercel.app",
+                                "https://exploremate*.vercel.app",
+                                "https://exploremate-*.vercel.app"));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
                 configuration.setAllowedHeaders(List.of("*"));
                 configuration.setAllowCredentials(true);

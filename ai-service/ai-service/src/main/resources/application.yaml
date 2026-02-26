@@ -5,6 +5,12 @@ spring:
   application:
     name: ai-service
 
+# Groq API configuration (free, fast, GPU-powered)
+groq:
+  api-key: ${GROQ_API_KEY:}
+  # Using llama-3.3-70b-versatile for better travel advice
+  model: ${GROQ_MODEL:llama-3.3-70b-versatile}
+
 eureka:
   client:
     service-url:
