@@ -1,105 +1,91 @@
 package com.exploreMate.ai_service.service;
 
+import com.exploreMate.ai_service.model.ChatMessage;
+import com.exploreMate.ai_service.model.Conversation;
+import com.exploreMate.ai_service.repository.ConversationRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Service to manage conversation history for each user/session.
- * Stores the last N messages to provide context for AI responses.
+ * Uses MongoDB for persistent storage.
  */
 @Service
 public class ConversationHistoryService {
 
-    // Store conversation history for each session (userId or sessionId)
-    // In production, you'd want to persist this to a database
-    private final Map<String, List<ChatMessage>> conversationHistory = new ConcurrentHashMap<>();
-    
-    // Store conversation metadata (title, timestamp)
-    private final Map<String, ConversationInfo> conversationInfo = new ConcurrentHashMap<>();
+    @Autowired
+    private ConversationRepository conversationRepository;
     
     // Maximum number of messages to keep in history
     private static final int MAX_HISTORY_SIZE = 10;
     
-    public static class ChatMessage {
-        private String role; // "user" or "assistant"
-        private String content;
-        
-        public ChatMessage(String role, String content) {
-            this.role = role;
-            this.content = content;
-        }
-        
-        public String getRole() {
-            return role;
-        }
-        
-        public String getContent() {
-            return content;
-        }
-        
-        public Map<String, String> toMap() {
-            Map<String, String> map = new HashMap<>();
-            map.put("role", role);
-            map.put("content", content);
-            return map;
-        }
-    }
-    
-    public static class ConversationInfo {
-        private String sessionId;
-        private String title;
-        private long createdAt;
-        private long updatedAt;
-        
-        public ConversationInfo(String sessionId, String title) {
-            this.sessionId = sessionId;
-            this.title = title;
-            this.createdAt = System.currentTimeMillis();
-            this.updatedAt = System.currentTimeMillis();
-        }
-        
-        public String getSessionId() { return sessionId; }
-        public String getTitle() { return title; }
-        public long getCreatedAt() { return createdAt; }
-        public long getUpdatedAt() { return updatedAt; }
-        public void setTitle(String title) { this.title = title; }
-        public void setUpdatedAt(long updatedAt) { this.updatedAt = updatedAt; }
-        
-        public Map<String, Object> toMap() {
-            Map<String, Object> map = new HashMap<>();
-            map.put("sessionId", sessionId);
-            map.put("title", title);
-            map.put("createdAt", createdAt);
-            map.put("updatedAt", updatedAt);
-            return map;
-        }
-    }
-    
     /**
      * Add a user message to the conversation history
+     * Session ID format: userEmail_sessionId
      */
-    public void addUserMessage(String sessionId, String message) {
-        addMessage(sessionId, "user", message);
+    public void addUserMessage(String sessionKey, String message) {
+        // Parse the sessionKey to get userEmail
+        String[] parts = parseSessionKey(sessionKey);
+        String userEmail = parts[0];
+        
+        Conversation conversation = conversationRepository.findById(sessionKey)
+            .orElseGet(() -> {
+                Conversation c = new Conversation();
+                c.setId(sessionKey);
+                c.setUserEmail(userEmail);
+                c.setSessionId(sessionKey);
+                c.setTitle("New Conversation");
+                return c;
+            });
+        
+        conversation.addMessage(new ChatMessage("user", message));
+        
+        // Keep only the last MAX_HISTORY_SIZE messages
+        if (conversation.getMessages().size() > MAX_HISTORY_SIZE) {
+            conversation.getMessages().remove(0);
+        }
+        
+        conversationRepository.save(conversation);
     }
     
     /**
      * Add an AI response to the conversation history
      */
-    public void addAssistantMessage(String sessionId, String message) {
-        addMessage(sessionId, "assistant", message);
+    public void addAssistantMessage(String sessionKey, String message) {
+        // Parse the sessionKey to get userEmail
+        String[] parts = parseSessionKey(sessionKey);
+        String userEmail = parts[0];
         
-        // Update conversation title if this is the first assistant message
-        if (!conversationInfo.containsKey(sessionId)) {
-            String title = generateTitle(message);
-            conversationInfo.put(sessionId, new ConversationInfo(sessionId, title));
-        } else {
-            conversationInfo.get(sessionId).setUpdatedAt(System.currentTimeMillis());
+        Conversation conversation = conversationRepository.findById(sessionKey)
+            .orElseGet(() -> {
+                Conversation c = new Conversation();
+                c.setId(sessionKey);
+                c.setUserEmail(userEmail);
+                c.setSessionId(sessionKey);
+                c.setTitle(generateTitle(message));
+                return c;
+            });
+        
+        // Update title if it's a new conversation
+        if (conversation.getTitle().equals("New Conversation") && conversation.getMessages().isEmpty()) {
+            conversation.setTitle(generateTitle(message));
         }
+        
+        conversation.addMessage(new ChatMessage("assistant", message));
+        
+        // Keep only the last MAX_HISTORY_SIZE messages
+        if (conversation.getMessages().size() > MAX_HISTORY_SIZE) {
+            conversation.getMessages().remove(0);
+        }
+        
+        conversationRepository.save(conversation);
     }
     
     private String generateTitle(String firstResponse) {
-        // Generate a title from the first few words of the response
         if (firstResponse == null || firstResponse.isEmpty()) {
             return "New Conversation";
         }
@@ -111,57 +97,85 @@ public class ConversationHistoryService {
         return title;
     }
     
-    private void addMessage(String sessionId, String role, String content) {
-        conversationHistory.computeIfAbsent(sessionId, k -> new ArrayList<>());
-        
-        List<ChatMessage> history = conversationHistory.get(sessionId);
-        history.add(new ChatMessage(role, content));
-        
-        // Keep only the last MAX_HISTORY_SIZE messages
-        while (history.size() > MAX_HISTORY_SIZE) {
-            history.remove(0);
+    /**
+     * Parse the composite session key into userEmail and sessionId
+     * Format: userEmail_sessionId
+     */
+    private String[] parseSessionKey(String sessionKey) {
+        int lastUnderscore = sessionKey.lastIndexOf('_');
+        if (lastUnderscore > 0) {
+            String userEmail = sessionKey.substring(0, lastUnderscore);
+            String sessionId = sessionKey.substring(lastUnderscore + 1);
+            return new String[]{userEmail, sessionId};
         }
+        return new String[]{"anonymous", sessionKey};
     }
     
     /**
      * Get conversation history for a session as a list of maps
      * for sending to the Groq API
      */
-    public List<Map<String, String>> getHistoryAsList(String sessionId) {
-        List<ChatMessage> history = conversationHistory.getOrDefault(sessionId, new ArrayList<>());
-        List<Map<String, String>> result = new ArrayList<>();
-        for (ChatMessage msg : history) {
-            result.add(msg.toMap());
+    public List<Map<String, String>> getHistoryAsList(String sessionKey) {
+        Optional<Conversation> conversationOpt = conversationRepository.findById(sessionKey);
+        
+        if (conversationOpt.isEmpty()) {
+            return new ArrayList<>();
         }
+        
+        Conversation conversation = conversationOpt.get();
+        List<Map<String, String>> result = new ArrayList<>();
+        
+        for (ChatMessage msg : conversation.getMessages()) {
+            Map<String, String> map = new HashMap<>();
+            map.put("role", msg.getRole());
+            map.put("content", msg.getContent());
+            result.add(map);
+        }
+        
         return result;
     }
     
     /**
-     * Get list of all conversations
+     * Get list of all conversations (for admin)
      */
     public List<Map<String, Object>> getAllConversations() {
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (ConversationInfo info : conversationInfo.values()) {
-            result.add(info.toMap());
-        }
-        // Sort by updated time, most recent first
-        result.sort((a, b) -> Long.compare((Long) b.get("updatedAt"), (Long) a.get("updatedAt")));
-        return result;
+        return conversationRepository.findAll().stream()
+            .map(this::conversationToMap)
+            .collect(Collectors.toList());
+    }
+    
+    /**
+     * Get list of conversations for a specific user
+     */
+    public List<Map<String, Object>> getConversationsForUser(String userEmail) {
+        // Find all conversations for this user by userEmail field, sorted by most recent
+        return conversationRepository.findByUserEmailOrderByUpdatedAtDesc(userEmail).stream()
+            .map(this::conversationToMap)
+            .collect(Collectors.toList());
+    }
+    
+    private Map<String, Object> conversationToMap(Conversation conversation) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("sessionId", conversation.getSessionId());
+        map.put("title", conversation.getTitle());
+        map.put("createdAt", conversation.getCreatedAt().toEpochMilli());
+        map.put("updatedAt", conversation.getUpdatedAt().toEpochMilli());
+        return map;
     }
     
     /**
      * Clear conversation history for a session
      */
-    public void clearHistory(String sessionId) {
-        conversationHistory.remove(sessionId);
-        conversationInfo.remove(sessionId);
+    public void clearHistory(String sessionKey) {
+        conversationRepository.deleteById(sessionKey);
     }
     
     /**
      * Check if a session has any history
      */
-    public boolean hasHistory(String sessionId) {
-        return conversationHistory.containsKey(sessionId) && 
-               !conversationHistory.get(sessionId).isEmpty();
+    public boolean hasHistory(String sessionKey) {
+        Optional<Conversation> conversation = conversationRepository.findById(sessionKey);
+        
+        return conversation.isPresent() && !conversation.get().getMessages().isEmpty();
     }
 }

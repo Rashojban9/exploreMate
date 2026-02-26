@@ -8,7 +8,10 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
+import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +24,10 @@ import java.util.UUID;
 public class AiController {
 
     private final ConversationHistoryService conversationHistoryService;
+    
+    // JWT secret - should match the one in auth-service
+    private final String JWT_SECRET = "my_super_secret_key_that_is_very_long_1234567890";
+    private SecretKey key = Keys.hmacShaKeyFor(JWT_SECRET.getBytes());
 
     // Groq API configuration
     @Value("${groq.api-key:${GROQ_API_KEY:}}")
@@ -40,9 +47,33 @@ public class AiController {
                 .build();
         this.conversationHistoryService = conversationHistoryService;
     }
+    
+    // Extract user email from JWT token
+    private String extractUserFromToken(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return "anonymous";
+        }
+        try {
+            String token = authHeader.substring(7);
+            return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject();
+        } catch (Exception e) {
+            return "anonymous";
+        }
+    }
+    
+    // Create user-specific session key
+    private String getUserSessionKey(String userEmail, String sessionId) {
+        return userEmail + "_" + sessionId;
+    }
 
     @PostMapping("/suggestion")
-    public ResponseEntity<AiSuggestionResponse> getSuggestion(@RequestBody AiSuggestionRequest request) {
+    public ResponseEntity<AiSuggestionResponse> getSuggestion(
+            @RequestBody AiSuggestionRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        
+        // Extract user from JWT token
+        String userEmail = extractUserFromToken(authHeader);
+        
         String userPrompt = request.getPrompt();
         
         // Get session ID or generate a new one
@@ -51,13 +82,16 @@ public class AiController {
             sessionId = UUID.randomUUID().toString();
         }
         
+        // Create user-specific session key
+        String userSessionKey = getUserSessionKey(userEmail, sessionId);
+        
         // Check if user wants to clear history
         if (request.getClearHistory() != null && request.getClearHistory()) {
-            conversationHistoryService.clearHistory(sessionId);
+            conversationHistoryService.clearHistory(userSessionKey);
         }
         
         // Get conversation history
-        List<Map<String, String>> conversationMessages = conversationHistoryService.getHistoryAsList(sessionId);
+        List<Map<String, String>> conversationMessages = conversationHistoryService.getHistoryAsList(userSessionKey);
         
         // Enhance the prompt for better travel tips
         String systemPrompt = """
@@ -85,35 +119,52 @@ public class AiController {
         // Call Groq API with conversation history
         String aiResponse = callGroqWithHistory(messages);
         
-        // Save conversation to history
-        conversationHistoryService.addUserMessage(sessionId, userPrompt);
-        conversationHistoryService.addAssistantMessage(sessionId, aiResponse);
+        // Save conversation to history with user-specific key
+        conversationHistoryService.addUserMessage(userSessionKey, userPrompt);
+        conversationHistoryService.addAssistantMessage(userSessionKey, aiResponse);
         
         return ResponseEntity.ok(new AiSuggestionResponse(aiResponse, false));
     }
     
     @PostMapping("/clear")
-    public ResponseEntity<Map<String, String>> clearConversation(@RequestBody AiSuggestionRequest request) {
+    public ResponseEntity<Map<String, String>> clearConversation(
+            @RequestBody AiSuggestionRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        
+        String userEmail = extractUserFromToken(authHeader);
         String sessionId = request.getSessionId();
+        
         if (sessionId != null && !sessionId.isEmpty()) {
-            conversationHistoryService.clearHistory(sessionId);
+            String userSessionKey = getUserSessionKey(userEmail, sessionId);
+            conversationHistoryService.clearHistory(userSessionKey);
             return ResponseEntity.ok(Map.of("message", "Conversation history cleared"));
         }
         return ResponseEntity.badRequest().body(Map.of("error", "Session ID required"));
     }
     
     @GetMapping("/history/{sessionId}")
-    public ResponseEntity<List<Map<String, String>>> getConversationHistory(@PathVariable String sessionId) {
-        List<Map<String, String>> history = conversationHistoryService.getHistoryAsList(sessionId);
+    public ResponseEntity<List<Map<String, String>>> getHistory(
+            @PathVariable String sessionId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        
+        String userEmail = extractUserFromToken(authHeader);
+        String userSessionKey = getUserSessionKey(userEmail, sessionId);
+        
+        List<Map<String, String>> history = conversationHistoryService.getHistoryAsList(userSessionKey);
         return ResponseEntity.ok(history);
     }
     
     @GetMapping("/conversations")
-    public ResponseEntity<List<Map<String, Object>>> getAllConversations() {
-        List<Map<String, Object>> conversations = conversationHistoryService.getAllConversations();
+    public ResponseEntity<List<Map<String, Object>>> getConversations(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        
+        String userEmail = extractUserFromToken(authHeader);
+        
+        // Get all conversations for this user
+        List<Map<String, Object>> conversations = conversationHistoryService.getConversationsForUser(userEmail);
         return ResponseEntity.ok(conversations);
     }
-
+    
     private String callGroqWithHistory(List<Map<String, String>> messages) {
         try {
             String apiKey = groqApiKey;

@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: ai-service
+  data:
+    mongodb:
+      uri: "mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/ai_service?retryWrites=true&w=majority&appName=exploremate-dev"
+      uuid-representation: standard
 
 # Groq API configuration (free, fast, GPU-powered)
 groq:

@@ -88,11 +88,13 @@ services:
   # AI Service (Groq API - fast, free GPU)
   ai-service:
     build: ./ai-service/ai-service
+    env_file:
+      - .env
     ports:
       - "9091:9091"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
       - GROQ_MODEL=${GROQ_MODEL}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
     depends_on:
