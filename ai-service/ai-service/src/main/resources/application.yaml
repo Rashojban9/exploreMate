@@ -6,8 +6,13 @@ spring:
     name: ai-service
   data:
     mongodb:
-      uri: "mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/ai_service?retryWrites=true&w=majority&appName=exploremate-dev"
+      uri: ${MONGODB_URI_AI:mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/ai_service?retryWrites=true&w=majority&appName=exploremate-dev}
       uuid-representation: standard
+
+# Auth service URL for fetching user profile
+auth:
+  service:
+    url: ${AUTH_SERVICE_URL:http://localhost:8080}
 
 # Groq API configuration (free, fast, GPU-powered)
 groq:
@@ -21,3 +26,6 @@ eureka:
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
   instance:
     prefer-ip-address: true
+
+jwt:
+  secret: my_super_secret_key_that_is_very_long_1234567890

@@ -1,14 +1,18 @@
 package com.exploreMate.ai_service.service;
 
-import com.exploreMate.ai_service.model.ChatMessage;
-import com.exploreMate.ai_service.model.Conversation;
-import com.exploreMate.ai_service.repository.ConversationRepository;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.exploreMate.ai_service.model.ChatMessage;
+import com.exploreMate.ai_service.model.Conversation;
+import com.exploreMate.ai_service.repository.ConversationRepository;
 
 /**
  * Service to manage conversation history for each user/session.
@@ -27,18 +31,17 @@ public class ConversationHistoryService {
      * Add a user message to the conversation history
      * Session ID format: userEmail_sessionId
      */
-    public void addUserMessage(String sessionKey, String message) {
-        // Parse the sessionKey to get userEmail
-        String[] parts = parseSessionKey(sessionKey);
-        String userEmail = parts[0];
+    public void addUserMessage(String userEmail, String sessionId, String message) {
+        String sessionKey = userEmail + "_" + sessionId;
         
         Conversation conversation = conversationRepository.findById(sessionKey)
             .orElseGet(() -> {
                 Conversation c = new Conversation();
                 c.setId(sessionKey);
                 c.setUserEmail(userEmail);
-                c.setSessionId(sessionKey);
-                c.setTitle("New Conversation");
+                c.setSessionId(sessionId);
+                // Generate title from first user message (like ChatGPT)
+                c.setTitle(generateTitleFromUserMessage(message));
                 return c;
             });
         
@@ -55,25 +58,18 @@ public class ConversationHistoryService {
     /**
      * Add an AI response to the conversation history
      */
-    public void addAssistantMessage(String sessionKey, String message) {
-        // Parse the sessionKey to get userEmail
-        String[] parts = parseSessionKey(sessionKey);
-        String userEmail = parts[0];
+    public void addAssistantMessage(String userEmail, String sessionId, String message) {
+        String sessionKey = userEmail + "_" + sessionId;
         
         Conversation conversation = conversationRepository.findById(sessionKey)
             .orElseGet(() -> {
                 Conversation c = new Conversation();
                 c.setId(sessionKey);
                 c.setUserEmail(userEmail);
-                c.setSessionId(sessionKey);
-                c.setTitle(generateTitle(message));
+                c.setSessionId(sessionId);
+                c.setTitle(generateTitleFromUserMessage(""));
                 return c;
             });
-        
-        // Update title if it's a new conversation
-        if (conversation.getTitle().equals("New Conversation") && conversation.getMessages().isEmpty()) {
-            conversation.setTitle(generateTitle(message));
-        }
         
         conversation.addMessage(new ChatMessage("assistant", message));
         
@@ -85,16 +81,25 @@ public class ConversationHistoryService {
         conversationRepository.save(conversation);
     }
     
-    private String generateTitle(String firstResponse) {
-        if (firstResponse == null || firstResponse.isEmpty()) {
+    /**
+     * Generate a title from the user's first message (like ChatGPT)
+     */
+    private String generateTitleFromUserMessage(String userMessage) {
+        if (userMessage == null || userMessage.isEmpty()) {
             return "New Conversation";
         }
-        String title = firstResponse.substring(0, Math.min(50, firstResponse.length()));
-        title = title.replaceAll("[\\n\\r]", " ").trim();
-        if (title.length() >= 50) {
-            title += "...";
+        
+        // Clean up the message
+        String title = userMessage.replaceAll("[\\n\\r]", " ").trim();
+        
+        // If message is short, use it as is
+        if (title.length() <= 50) {
+            return title;
         }
-        return title;
+        
+        // Take first 50 characters and add ellipsis
+        title = title.substring(0, 50).trim();
+        return title + "...";
     }
     
     /**

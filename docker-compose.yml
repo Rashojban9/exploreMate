@@ -21,9 +21,11 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_URI=${MONGODB_URI_AUTH}
       - JWT_SECRET=${JWT_SECRET}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    env_file:
+      - .env
     depends_on:
       - service-discovery
     deploy:
@@ -38,8 +40,10 @@ services:
       - "8083:8083"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_URI=${MONGODB_URI_TRIP}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    env_file:
+      - .env
     depends_on:
       - service-discovery
     deploy:
@@ -94,8 +98,10 @@ services:
       - "9091:9091"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - MONGODB_URI=${MONGODB_URI_AI}
+      - GROQ_API_KEY=${GROQ_API_KEY}
       - GROQ_MODEL=${GROQ_MODEL}
+      - AUTH_SERVICE_URL=http://auth-service:8080
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
     depends_on:
       - service-discovery

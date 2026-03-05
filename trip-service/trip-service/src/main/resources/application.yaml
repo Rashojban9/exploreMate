@@ -3,7 +3,7 @@ spring:
     name: trip-service
   data:
     mongodb:
-      uri: "mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/exploremate?retryWrites=true&w=majority&appName=exploremate-dev"
+      uri: ${MONGODB_URI_TRIP:mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/trip_db?retryWrites=true&w=majority&appName=exploremate-dev}
       uuid-representation: standard
 server:
   port: 8083
