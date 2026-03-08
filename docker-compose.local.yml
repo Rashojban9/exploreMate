@@ -1,5 +1,5 @@
-# ExploreMate - Railway Deployment
-# Railway has better free tier - supports docker-compose deployment
+# ExploreMate - Local Docker Deployment
+# Run this with: docker-compose -f docker-compose.local.yml up
 
 services:
   # Kafka and Zookeeper
@@ -15,52 +15,52 @@ services:
     image: confluentinc/cp-kafka:7.5.0
     ports:
       - "9092:9092"
+    depends_on:
+      - zookeeper
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-    depends_on:
-      - zookeeper
+      KAFKA_CREATE_TOPICS: "signup:1:1,password-reset:1:1"
 
   # Service Discovery (Eureka)
   service-discovery:
-    build: ./service-discovery/service-discovery
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8761:8761"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-    deploy:
-      resources:
-        limits:
-          memory: 512M
 
   # Auth Service
   auth-service:
-    build: ./auth-service/auth-service
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - MONGODB_URI=${MONGODB_URI_AUTH}
       - JWT_SECRET=${JWT_SECRET}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - FRONTEND_URL=${FRONTEND_URL}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     env_file:
       - .env
     depends_on:
       - service-discovery
       - kafka
-    deploy:
-      resources:
-        limits:
-          memory: 512M
 
   # Trip Service
   trip-service:
-    build: ./trip-service/trip-service
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8083:8083"
     environment:
@@ -71,14 +71,12 @@ services:
       - .env
     depends_on:
       - service-discovery
-    deploy:
-      resources:
-        limits:
-          memory: 512M
 
   # Email Service
   email-service:
-    build: ./email-service/email-service
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "9090:9090"
     environment:
@@ -86,21 +84,19 @@ services:
       - SPRING_MAIL_USERNAME=${EMAIL_USERNAME}
       - SPRING_MAIL_PASSWORD=${EMAIL_PASSWORD}
       - RESEND_API_KEY=${RESEND_API_KEY}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     env_file:
       - .env
     depends_on:
       - service-discovery
       - kafka
-    deploy:
-      resources:
-        limits:
-          memory: 512M
 
   # API Gateway
   api-gateway:
-    build: ./api-gateway/api-gateway
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "9080:9080"
     environment:
@@ -114,14 +110,12 @@ services:
       - service-discovery
       - auth-service
       - trip-service
-    deploy:
-      resources:
-        limits:
-          memory: 512M
 
-  # AI Service (Groq API - fast, free GPU)
+  # AI Service (Groq API)
   ai-service:
-    build: ./ai-service/ai-service
+    build:
+      context: .
+      dockerfile: Dockerfile
     env_file:
       - .env
     ports:
@@ -135,7 +129,3 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
     depends_on:
       - service-discovery
-    deploy:
-      resources:
-        limits:
-          memory: 512M

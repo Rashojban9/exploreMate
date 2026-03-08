@@ -4,13 +4,16 @@ spring:
   mongodb:
     uri: ${MONGODB_URI_AUTH:mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/auth_db?retryWrites=true&w=majority&appName=exploremate-dev}
   kafka:
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 server:
   port: 8080
+
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
   forward-headers-strategy: framework
 springdoc:
   swagger-ui:

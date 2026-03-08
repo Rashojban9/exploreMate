@@ -1,5 +1,5 @@
-# ExploreMate - Hugging Face Spaces Deployment
-# Builds all microservices from source
+# ExploreMate - Single Container Deployment with Kafka
+# Builds all microservices from source and includes Kafka
 
 # ============ BUILD STAGE ============
 FROM maven:3.9-eclipse-temurin-21 AS builder
@@ -38,8 +38,16 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-# Install utilities
-RUN apk add --no-cache curl bash
+# Install utilities including Kafka
+RUN apk add --no-cache curl bash docker
+
+# Download and extract Kafka
+RUN curl -sL https://downloads.apache.org/kafka/3.7.0/kafka_2.13-3.7.0.tgz | tar -xz -C /opt/ \
+    && ln -s /opt/kafka_2.13-3.7.0 /opt/kafka
+
+# Set Kafka environment
+ENV KAFKA_HOME=/opt/kafka
+ENV PATH=$PATH:$KAFKA_HOME/bin
 
 # Create services directory
 RUN mkdir -p /app/services
@@ -63,19 +71,39 @@ ENV MONGODB_URI_AI=${MONGODB_URI_AI}
 # JWT Secret
 ENV JWT_SECRET=${JWT_SECRET}
 
-# Email
+# Email - Resend API
 ENV SPRING_MAIL_USERNAME=${EMAIL_USERNAME}
 ENV SPRING_MAIL_PASSWORD=${EMAIL_PASSWORD}
+ENV RESEND_API_KEY=${RESEND_API_KEY}
+
+# Kafka
+ENV KAFKA_ZOOKEEPER_CONNECT=localhost:2181
+ENV KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+ENV KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT
+ENV KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+ENV KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+ENV KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+ENV SPRING_KAFKA_BOOTSTRAP_SERVERS=localhost:9092
 
 # Groq AI
 ENV GROQ_API_KEY=${GROQ_API_KEY}
 ENV GROQ_MODEL=${GROQ_MODEL}
 
-# Expose all ports
-EXPOSE 8761 8080 9080 8083 9090 9091
+# Expose all ports (Zookeeper, Kafka, and all services)
+EXPOSE 2181 9092 8761 8080 9080 8083 9090 9091
 
-# Start all services with memory limits
+# Start Zookeeper, Kafka, and all services
 CMD ["sh", "-c", "\
+    echo 'Starting Zookeeper...' && \
+    $KAFKA_HOME/bin/zookeeper-server-start.sh -daemon $KAFKA_HOME/config/zookeeper.properties & \
+    sleep 10 && \
+    echo 'Starting Kafka...' && \
+    $KAFKA_HOME/bin/kafka-server-start.sh -daemon $KAFKA_HOME/config/server.properties & \
+    sleep 15 && \
+    echo 'Creating Kafka topics...' && \
+    $KAFKA_HOME/bin/kafka-topics.sh --create --topic signup --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 2>/dev/null || true && \
+    $KAFKA_HOME/bin/kafka-topics.sh --create --topic password-reset --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 2>/dev/null || true && \
+    sleep 5 && \
     echo 'Starting Service Discovery...' && \
     java -Xmx384m -Xms256m -jar /app/services/service-discovery*.jar & \
     sleep 20 && \
@@ -92,4 +120,7 @@ CMD ["sh", "-c", "\
     java -Xmx384m -Xms256m -jar /app/services/ai-service*.jar & \
     sleep 15 && \
     echo 'Starting API Gateway...' && \
-    java -Xmx512m -Xms384m -jar /app/services/api-gateway*.jar"]
+    java -Xmx512m -Xms384m -jar /app/services/api-gateway*.jar & \
+    sleep 5 && \
+    echo 'All services started!' && \
+    tail -f /dev/null"]

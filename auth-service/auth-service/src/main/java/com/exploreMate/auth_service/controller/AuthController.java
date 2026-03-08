@@ -3,6 +3,8 @@ package com.exploreMate.auth_service.controller;
 import com.exploreMate.auth_service.dto.request.SigninReqDto;
 import com.exploreMate.auth_service.dto.request.SignupReqDto;
 import com.exploreMate.auth_service.dto.request.ProfileUpdateReqDto;
+import com.exploreMate.auth_service.dto.request.ForgotPasswordReqDto;
+import com.exploreMate.auth_service.dto.request.ResetPasswordReqDto;
 import com.exploreMate.auth_service.routes.AuthRoute;
 import com.exploreMate.auth_service.service.AuthService;
 import com.exploreMate.auth_service.utils.Response;
@@ -100,6 +102,18 @@ public class AuthController {
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> getAllUsers() {
         return Response.sucess("All users retrieved successfully", service.getAllUsers());
+    }
+
+    @PostMapping(AuthRoute.FORGOT_PASSWORD)
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordReqDto request) {
+        String result = service.forgotPassword(request.email());
+        return Response.sucess(result, null);
+    }
+
+    @PostMapping(AuthRoute.RESET_PASSWORD)
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordReqDto request) {
+        String result = service.resetPassword(request.token(), request.newPassword());
+        return Response.sucess(result, null);
     }
 
 }

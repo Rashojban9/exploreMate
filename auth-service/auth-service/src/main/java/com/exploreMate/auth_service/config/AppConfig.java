@@ -1,25 +1,25 @@
 package com.exploreMate.auth_service.config;
 
-import com.exploreMate.auth_service.jwt.jwtUtils.JwtFilterChain;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.security.web.access.AccessDeniedHandler;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import com.exploreMate.auth_service.jwt.jwtUtils.JwtFilterChain;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
 @EnableWebSecurity
@@ -36,8 +36,8 @@ public class AppConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/login", "/auth/signup", "/auth/register").permitAll()
-                .requestMatchers("/api/auth/login", "/api/auth/signup", "/api/auth/register").permitAll()
+                .requestMatchers("/auth/login", "/auth/signup", "/auth/register", "/auth/forgot-password", "/auth/reset-password").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/signup", "/api/auth/register", "/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
                 .requestMatchers("/public/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/swagger-ui/**").permitAll()
@@ -75,6 +75,11 @@ public class AppConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 
 
