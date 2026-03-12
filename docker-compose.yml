@@ -5,6 +5,7 @@ services:
   # Kafka and Zookeeper
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
+    dns: 8.8.8.8
     ports:
       - "2181:2181"
     environment:
@@ -13,6 +14,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
+    dns: 8.8.8.8
     ports:
       - "9092:9092"
     environment:
@@ -27,6 +29,7 @@ services:
   # Service Discovery (Eureka)
   service-discovery:
     build: ./service-discovery/service-discovery
+    dns: 8.8.8.8
     ports:
       - "8761:8761"
     environment:
@@ -39,6 +42,7 @@ services:
   # Auth Service
   auth-service:
     build: ./auth-service/auth-service
+    dns: 8.8.8.8
     ports:
       - "8080:8080"
     environment:
@@ -61,6 +65,7 @@ services:
   # Trip Service
   trip-service:
     build: ./trip-service/trip-service
+    dns: 8.8.8.8
     ports:
       - "8083:8083"
     environment:
@@ -79,6 +84,7 @@ services:
   # Email Service
   email-service:
     build: ./email-service/email-service
+    dns: 8.8.8.8
     ports:
       - "9090:9090"
     environment:
@@ -101,6 +107,7 @@ services:
   # API Gateway
   api-gateway:
     build: ./api-gateway/api-gateway
+    dns: 8.8.8.8
     ports:
       - "9080:9080"
     environment:
@@ -122,6 +129,7 @@ services:
   # AI Service (Groq API - fast, free GPU)
   ai-service:
     build: ./ai-service/ai-service
+    dns: 8.8.8.8
     env_file:
       - .env
     ports:

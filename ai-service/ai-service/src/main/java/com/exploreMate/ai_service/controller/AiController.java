@@ -27,6 +27,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.exploreMate.ai_service.dto.AiSuggestionRequest;
 import com.exploreMate.ai_service.dto.AiSuggestionResponse;
+import com.exploreMate.ai_service.dto.TranslateRequest;
+import com.exploreMate.ai_service.dto.TranslateResponse;
 import com.exploreMate.ai_service.service.ConversationHistoryService;
 
 import io.jsonwebtoken.Jwts;
@@ -68,6 +70,46 @@ public class AiController {
                 .build();
         this.conversationHistoryService = conversationHistoryService;
     }
+    
+    // ─── Translation Endpoint ─────────────────────────────────────────────────────
+    
+    @PostMapping("/translate")
+    public ResponseEntity<TranslateResponse> translate(@RequestBody TranslateRequest request) {
+        String text = request.getText();
+        String sourceLang = request.getSourceLang();
+        String targetLang = request.getTargetLang();
+        
+        if (text == null || text.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(new TranslateResponse("", sourceLang, targetLang));
+        }
+        
+        // Build a translation-specific system prompt
+        String systemPrompt = """
+            You are a professional translator. Your ONLY job is to translate text accurately.
+            
+            RULES:
+            1. Output ONLY the translated text — nothing else.
+            2. Do NOT add explanations, notes, or transliterations unless the user text itself contains them.
+            3. Preserve the original formatting (line breaks, punctuation, capitalization style).
+            4. If the source language is "Auto-detect", figure out the language yourself.
+            5. If the text is already in the target language, return it unchanged.
+            """;
+        
+        String userPrompt = String.format(
+                "Translate the following text from %s to %s:\n\n%s",
+                sourceLang, targetLang, text);
+        
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", systemPrompt));
+        messages.add(Map.of("role", "user", "content", userPrompt));
+        
+        String translated = callGroqWithHistory(messages);
+        
+        return ResponseEntity.ok(new TranslateResponse(translated, sourceLang, targetLang));
+    }
+    
+    // ─── Existing Endpoints ───────────────────────────────────────────────────────
     
     // Fetch user profile from auth-service
     @SuppressWarnings("unchecked")
