@@ -1,108 +1,83 @@
 package com.exploreMate.api_gateway.jwt;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.core.Ordered;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+
+import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Mono;
+
 @Component
 @RequiredArgsConstructor
-public class JwtFilterChain extends OncePerRequestFilter {
+public class JwtFilterChain implements GlobalFilter, Ordered {
+
     private final JwtUtils jwtUtils;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        String path = request.getServletPath();
-        if ((path.contains("/public/") || path.contains("/auth-service/") || path.contains("/api/auth/"))
-                && !path.contains("/api/auth/me")) {
-            filterChain.doFilter(request, response);
-            return;
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        String path = exchange.getRequest().getURI().getPath();
+
+        // Skip filtering for public paths
+        if (path.contains("/public/") || path.contains("/auth-service/") || path.contains("/api/auth/")) {
+            if (!path.contains("/api/auth/me")) {
+                return chain.filter(exchange);
+            }
         }
-        String authHeader = request.getHeader("Authorization");
+
+        String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
+            return chain.filter(exchange);
         }
+
         String token = authHeader.substring(7);
+
         try {
-            if (SecurityContextHolder.getContext().getAuthentication() != null) {
-                filterChain.doFilter(request, response);
-                return;
-            }
             if (!jwtUtils.validateToken(token)) {
-                SecurityContextHolder.clearContext();
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
             }
+
             String username = jwtUtils.extractUsername(token);
             String email = jwtUtils.extractEmail(token);
             if (email == null) email = username;
 
             Set<String> roles = jwtUtils.extractRoles(token);
-            var authorities = roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, null,
-                    authorities);
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            var authorities = roles.stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .collect(Collectors.toList());
+
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    username, null, authorities);
+            
             SecurityContextHolder.getContext().setAuthentication(authToken);
 
-            // Add X-User-Email header for all authenticated requests
-            request = new HttpServletRequestWrapper(request, email);
+            // Add X-User-Email header for downstream services
+            var modifiedRequest = exchange.getRequest().mutate()
+                    .header("X-User-Email", email)
+                    .header("X-User-Name", username)
+                    .build();
 
-            filterChain.doFilter(request, response);
+            return chain.filter(exchange.mutate().request(modifiedRequest).build());
         } catch (Exception e) {
             System.err.println("JWT Filter Error at " + path + ": " + e.getMessage());
             e.printStackTrace();
             SecurityContextHolder.clearContext();
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
     }
 
-    // Inner class to wrap request with custom header
-    private static class HttpServletRequestWrapper extends jakarta.servlet.http.HttpServletRequestWrapper {
-        private final String email;
-
-        public HttpServletRequestWrapper(HttpServletRequest request, String email) {
-            super(request);
-            this.email = email;
-        }
-
-        @Override
-        public String getHeader(String name) {
-            if ("X-User-Email".equals(name)) {
-                return email;
-            }
-            return super.getHeader(name);
-        }
-
-        @Override
-
-        public java.util.Enumeration<String> getHeaderNames() {
-            java.util.List<String> names = java.util.Collections.list(super.getHeaderNames());
-            if (!names.contains("X-User-Email")) {
-                names.add("X-User-Email");
-            }
-            return java.util.Collections.enumeration(names);
-        }
-
-        @Override
-        public java.util.Enumeration<String> getHeaders(String name) {
-            if ("X-User-Email".equals(name)) {
-                return java.util.Collections.enumeration(java.util.Collections.singletonList(email));
-            }
-            return super.getHeaders(name);
-        }
-
+    @Override
+    public int getOrder() {
+        return -100;
     }
 }
