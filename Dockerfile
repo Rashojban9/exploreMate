@@ -25,6 +25,15 @@ COPY email-service/email-service/src /build/email-service/src
 COPY ai-service/ai-service/pom.xml /build/ai-service/pom.xml
 COPY ai-service/ai-service/src /build/ai-service/src
 
+COPY group-trip-service/pom.xml /build/group-trip-service/pom.xml
+COPY group-trip-service/src /build/group-trip-service/src
+
+COPY qr-guide-service/pom.xml /build/qr-guide-service/pom.xml
+COPY qr-guide-service/src /build/qr-guide-service/src
+
+COPY notification-service/pom.xml /build/notification-service/pom.xml
+COPY notification-service/src /build/notification-service/src
+
 # Build all services
 RUN cd /build/service-discovery && mvn clean package -DskipTests -B
 RUN cd /build/auth-service && mvn clean package -DskipTests -B
@@ -32,6 +41,9 @@ RUN cd /build/api-gateway && mvn clean package -DskipTests -B
 RUN cd /build/trip-service && mvn clean package -DskipTests -B
 RUN cd /build/email-service && mvn clean package -DskipTests -B
 RUN cd /build/ai-service && mvn clean package -DskipTests -B
+RUN cd /build/group-trip-service && mvn clean package -DskipTests -B
+RUN cd /build/qr-guide-service && mvn clean package -DskipTests -B
+RUN cd /build/notification-service && mvn clean package -DskipTests -B
 
 # ============ RUNTIME STAGE ============
 FROM eclipse-temurin:21-jre-alpine
@@ -41,8 +53,8 @@ WORKDIR /app
 # Install utilities including Kafka
 RUN apk add --no-cache curl bash docker
 
-# Download and extract Kafka
-RUN curl -sL https://downloads.apache.org/kafka/3.7.0/kafka_2.13-3.7.0.tgz | tar -xz -C /opt/ \
+# Download and extract Kafka (use archive mirror for reliability)
+RUN curl -fsSL https://archive.apache.org/dist/kafka/3.7.0/kafka_2.13-3.7.0.tgz | tar -xz -C /opt/ \
     && ln -s /opt/kafka_2.13-3.7.0 /opt/kafka
 
 # Set Kafka environment
@@ -59,6 +71,9 @@ COPY --from=builder /build/api-gateway/target/*.jar /app/services/
 COPY --from=builder /build/trip-service/target/*.jar /app/services/
 COPY --from=builder /build/email-service/target/*.jar /app/services/
 COPY --from=builder /build/ai-service/target/*.jar /app/services/
+COPY --from=builder /build/group-trip-service/target/*.jar /app/services/
+COPY --from=builder /build/qr-guide-service/target/*.jar /app/services/
+COPY --from=builder /build/notification-service/target/*.jar /app/services/
 
 # Set environment
 ENV SPRING_PROFILES_ACTIVE=prod
@@ -67,6 +82,9 @@ ENV SPRING_PROFILES_ACTIVE=prod
 ENV MONGODB_URI_AUTH=${MONGODB_URI_AUTH}
 ENV MONGODB_URI_TRIP=${MONGODB_URI_TRIP}
 ENV MONGODB_URI_AI=${MONGODB_URI_AI}
+ENV MONGODB_URI_GROUP_TRIP=${MONGODB_URI_GROUP_TRIP}
+ENV MONGODB_URI_QR_GUIDE=${MONGODB_URI_QR_GUIDE}
+ENV MONGODB_URI_NOTIFICATION=${MONGODB_URI_NOTIFICATION}
 
 # JWT Secret
 ENV JWT_SECRET=${JWT_SECRET}
@@ -90,7 +108,7 @@ ENV GROQ_API_KEY=${GROQ_API_KEY}
 ENV GROQ_MODEL=${GROQ_MODEL}
 
 # Expose all ports (Zookeeper, Kafka, and all services)
-EXPOSE 2181 9092 8761 8080 9080 8083 9090 9091
+EXPOSE 2181 9092 8761 8080 9080 8083 8084 8085 8086 9090 9091
 
 # Start Zookeeper, Kafka, and all services
 CMD ["sh", "-c", "\
@@ -103,6 +121,7 @@ CMD ["sh", "-c", "\
     echo 'Creating Kafka topics...' && \
     $KAFKA_HOME/bin/kafka-topics.sh --create --topic signup --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 2>/dev/null || true && \
     $KAFKA_HOME/bin/kafka-topics.sh --create --topic password-reset --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 2>/dev/null || true && \
+    $KAFKA_HOME/bin/kafka-topics.sh --create --topic notification-events --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 2>/dev/null || true && \
     sleep 5 && \
     echo 'Starting Service Discovery...' && \
     java -Xmx384m -Xms256m -jar /app/services/service-discovery*.jar & \
@@ -118,6 +137,15 @@ CMD ["sh", "-c", "\
     sleep 15 && \
     echo 'Starting AI Service...' && \
     java -Xmx384m -Xms256m -jar /app/services/ai-service*.jar & \
+    sleep 15 && \
+    echo 'Starting Group Trip Service...' && \
+    java -Xmx384m -Xms256m -jar /app/services/group-trip-service*.jar & \
+    sleep 15 && \
+    echo 'Starting QR Guide Service...' && \
+    java -Xmx384m -Xms256m -jar /app/services/qr-guide-service*.jar & \
+    sleep 15 && \
+    echo 'Starting Notification Service...' && \
+    java -Xmx384m -Xms256m -jar /app/services/notification-service*.jar & \
     sleep 15 && \
     echo 'Starting API Gateway...' && \
     java -Xmx512m -Xms384m -jar /app/services/api-gateway*.jar & \

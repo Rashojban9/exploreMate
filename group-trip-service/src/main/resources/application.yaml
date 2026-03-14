@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: group-trip-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI_GROUP_TRIP:mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/group_trip_db?retryWrites=true&w=majority&appName=exploremate-dev}
+      uuid-representation: standard
+server:
+  port: 8084
+eureka:
+  client:
+    service-url:
+      defaultZone: http://service-discovery:8761/eureka/
+  instance:
+    prefer-ip-address: true

@@ -2,17 +2,26 @@ package com.exploreMate.api_gateway.jwt;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Configuration
+@Component
 public class JwtUtils {
-    private String SECRET_KEY = "my_super_secret_key_that_is_very_long_1234567890";
-    private SecretKey key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    @Value("${jwt.secret:my_super_secret_key_that_is_very_long_1234567890}")
+    private String SECRET_KEY;
+    
+    private SecretKey key;
+
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    }
 
     public String extractUsername(String token) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().getSubject();
@@ -33,14 +42,21 @@ public class JwtUtils {
             return true;
         } catch (Exception ex) {
             return false;
-
         }
     }
 
     public Set<String> extractRoles(String token) {
-        Object roleObject = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("role");
+        var payload = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+        // Look for "roles" (auth-service style) or "role" (api-gateway legacy style)
+        Object roleObject = payload.get("roles");
+        if (roleObject == null) {
+            roleObject = payload.get("role");
+        }
+        
         if (roleObject instanceof List<?> list) {
             return list.stream().map(String::valueOf).collect(Collectors.toSet());
+        } else if (roleObject instanceof String s) {
+            return Set.of(s);
         }
         return Set.of();
     }

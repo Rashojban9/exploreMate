@@ -28,4 +28,4 @@ eureka:
     prefer-ip-address: true
 
 jwt:
-  secret: my_super_secret_key_that_is_very_long_1234567890
+  secret: ${JWT_SECRET:my_super_secret_key_that_is_very_long_1234567890}

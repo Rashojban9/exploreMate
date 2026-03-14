@@ -116,11 +116,20 @@ services:
       - TRIP_SERVICE_URL=http://trip-service:8083
       - EMAIL_SERVICE_URL=http://email-service:9090
       - AI_SERVICE_URL=http://ai-service:9091
+      - GROUP_TRIP_SERVICE_URL=http://group-trip-service:8084
+      - QR_GUIDE_SERVICE_URL=http://qr-guide-service:8085
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8086
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - JWT_SECRET=${JWT_SECRET}
+    env_file:
+      - .env
     depends_on:
       - service-discovery
       - auth-service
       - trip-service
+      - group-trip-service
+      - qr-guide-service
+      - notification-service
     deploy:
       resources:
         limits:
@@ -143,6 +152,64 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
     depends_on:
       - service-discovery
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # Group Trip Service
+  group-trip-service:
+    build: ./group-trip-service
+    dns: 8.8.8.8
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - MONGODB_URI=${MONGODB_URI_GROUP_TRIP}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    env_file:
+      - .env
+    depends_on:
+      - service-discovery
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # QR Guide Service
+  qr-guide-service:
+    build: ./qr-guide-service
+    dns: 8.8.8.8
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - MONGODB_URI=${MONGODB_URI_QR_GUIDE}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    env_file:
+      - .env
+    depends_on:
+      - service-discovery
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # Notification Service
+  notification-service:
+    build: ./notification-service
+    dns: 8.8.8.8
+    env_file:
+      - .env
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - service-discovery
+      - kafka
     deploy:
       resources:
         limits:

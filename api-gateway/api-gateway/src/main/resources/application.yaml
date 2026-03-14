@@ -42,6 +42,29 @@ spring:
                 - Path=/api/ai/**
               filters:
                 - StripPrefix=1
+            # Group Trip routes - handles frontend /api/group-trips/** calls
+            - id: group_trip_api_route
+              uri: ${GROUP_TRIP_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/api/group-trips/**
+              filters:
+                - StripPrefix=1
+            # QR Guide routes - handles frontend /api/qr-guides/** calls
+            - id: qr_guide_api_route
+              uri: ${QR_GUIDE_SERVICE_URL:http://localhost:8085}
+              predicates:
+                - Path=/api/qr-guides/**
+              filters:
+                - StripPrefix=1
+            - id: notification_api_route
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/notifications/**
+            # Notification WebSocket route
+            - id: notification_ws_route
+              uri: lb:ws://notification-service
+              predicates:
+                - Path=/ws/notifications/**
             # Legacy routes for service-to-service communication
             - id: auth_public_route
               uri: ${AUTH_SERVICE_URL:http://localhost:8080}
@@ -68,6 +91,18 @@ spring:
                 - Path=/email-service/**
               filters:
                 - StripPrefix=1
+            - id: group_trip_route
+              uri: ${GROUP_TRIP_SERVICE_URL:http://localhost:8084}
+              predicates:
+                - Path=/group-trip-service/**
+              filters:
+                - StripPrefix=1
+            - id: qr_guide_route
+              uri: ${QR_GUIDE_SERVICE_URL:http://localhost:8085}
+              predicates:
+                - Path=/qr-guide-service/**
+              filters:
+                - StripPrefix=1
             - id: test_route
               uri: ${AUTH_SERVICE_URL:http://localhost:8080}
               predicates:
@@ -83,3 +118,6 @@ eureka:
       defaultZone: http://service-discovery:8761/eureka/
   instance:
     prefer-ip-address: true
+
+jwt:
+  secret: ${JWT_SECRET:my_super_secret_key_that_is_very_long_1234567890}

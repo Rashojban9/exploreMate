@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: qr-guide-service
+  data:
+    mongodb:
+      uri: ${MONGODB_URI_QR_GUIDE:mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/qr_guide_db?retryWrites=true&w=majority&appName=exploremate-dev}
+      uuid-representation: standard
+server:
+  port: 8085
+eureka:
+  client:
+    service-url:
+      defaultZone: http://service-discovery:8761/eureka/
+  instance:
+    prefer-ip-address: true

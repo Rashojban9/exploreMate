@@ -25,7 +25,8 @@ public class JwtFilterChain extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String path = request.getServletPath();
-        if (path.contains("/public/") || path.contains("/auth-service/") || path.contains("/api/auth/")) {
+        if ((path.contains("/public/") || path.contains("/auth-service/") || path.contains("/api/auth/"))
+                && !path.contains("/api/auth/me")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -47,6 +48,8 @@ public class JwtFilterChain extends OncePerRequestFilter {
             }
             String username = jwtUtils.extractUsername(token);
             String email = jwtUtils.extractEmail(token);
+            if (email == null) email = username;
+
             Set<String> roles = jwtUtils.extractRoles(token);
             var authorities = roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, null,
@@ -54,13 +57,13 @@ public class JwtFilterChain extends OncePerRequestFilter {
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
 
-            // Add X-User-Email header for trip and saved item routes
-            if (path.contains("/api/trips") || path.contains("/api/saved")) {
-                request = new HttpServletRequestWrapper(request, email);
-            }
+            // Add X-User-Email header for all authenticated requests
+            request = new HttpServletRequestWrapper(request, email);
 
             filterChain.doFilter(request, response);
         } catch (Exception e) {
+            System.err.println("JWT Filter Error at " + path + ": " + e.getMessage());
+            e.printStackTrace();
             SecurityContextHolder.clearContext();
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
