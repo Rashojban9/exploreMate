@@ -1,8 +1,9 @@
 spring:
   application:
     name: auth-service
-  mongodb:
-    uri: ${MONGODB_URI_AUTH:mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/auth_db?retryWrites=true&w=majority&appName=exploremate-dev}
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 

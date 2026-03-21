@@ -214,3 +214,22 @@ services:
       resources:
         limits:
           memory: 512M
+
+  # Content Service
+  content-service:
+    build: ./content-service
+    dns: 8.8.8.8
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - MONGODB_URI=${MONGODB_URI_CONTENT}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
+    env_file:
+      - .env
+    depends_on:
+      - service-discovery
+    deploy:
+      resources:
+        limits:
+          memory: 512M

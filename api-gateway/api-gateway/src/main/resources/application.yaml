@@ -54,6 +54,10 @@ spring:
                 - Path=/api/qr-guides/**
               filters:
                 - StripPrefix=1
+            - id: content_api_route
+              uri: ${CONTENT_SERVICE_URL:http://localhost:8087}
+              predicates:
+                - Path=/api/content/**
             - id: notification_api_route
               uri: lb://notification-service
               predicates:

@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: content-service
+  mongodb:
+    uri: ${MONGODB_URI_CONTENT:mongodb+srv://exploremate:Arunabasnet1703%23%23@exploremate-dev.tcprkds.mongodb.net/content_db?retryWrites=true&w=majority&appName=exploremate-dev}
+server:
+  port: 8087
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://service-discovery:8761/eureka/}
+  instance:
+    prefer-ip-address: true

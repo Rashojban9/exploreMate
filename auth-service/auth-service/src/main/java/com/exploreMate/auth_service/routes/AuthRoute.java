@@ -9,6 +9,7 @@ public class AuthRoute {
     public static final String PROFILE_UPDATE = BASE + "/profile";
     public static final String FORGOT_PASSWORD = BASE + "/forgot-password";
     public static final String RESET_PASSWORD = BASE + "/reset-password";
+    public static final String CHANGE_PASSWORD = BASE + "/profile/password";
 
     // Admin routes
     public static final String ADMIN_BASE = BASE + "/admin";

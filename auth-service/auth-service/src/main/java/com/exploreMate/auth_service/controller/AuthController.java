@@ -79,6 +79,17 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Response.error("Not authenticated"));
     }
 
+    @PutMapping(AuthRoute.CHANGE_PASSWORD)
+    public ResponseEntity<?> changePassword(@RequestBody com.exploreMate.auth_service.dto.request.ChangePasswordReqDto request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = getEmailFromAuthentication(authentication);
+        if (userEmail != null) {
+            String result = service.changePassword(userEmail, request);
+            return Response.sucess(result, null);
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Response.error("Not authenticated"));
+    }
+
     private String getEmailFromAuthentication(Authentication authentication) {
         if (authentication == null)
             return null;

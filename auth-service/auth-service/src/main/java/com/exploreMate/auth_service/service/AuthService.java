@@ -260,6 +260,21 @@ public class AuthService {
         return "If the email exists, a reset link will be sent";
     }
 
+    // Change Password
+    public String changePassword(String email, com.exploreMate.auth_service.dto.request.ChangePasswordReqDto request) {
+        UserAccount user = repo.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new RuntimeException("Current password does not match");
+        }
+        
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        repo.save(user);
+        
+        return "Password changed successfully";
+    }
+
     // Reset Password
     public String resetPassword(String token, String newPassword) {
         var tokenOpt = tokenRepo.findByToken(token);

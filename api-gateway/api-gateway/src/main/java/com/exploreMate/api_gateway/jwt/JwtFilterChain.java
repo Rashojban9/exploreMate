@@ -27,7 +27,7 @@ public class JwtFilterChain implements GlobalFilter, Ordered {
         String path = exchange.getRequest().getURI().getPath();
 
         // Skip filtering for public paths
-        if (path.contains("/public/") || path.contains("/auth-service/") || path.contains("/api/auth/")) {
+        if (path.contains("/public/") || path.contains("/auth-service/") || path.contains("/api/auth/") || path.startsWith("/api/content/pages/")) {
             if (!path.contains("/api/auth/me")) {
                 return chain.filter(exchange);
             }
@@ -60,10 +60,11 @@ public class JwtFilterChain implements GlobalFilter, Ordered {
             
             SecurityContextHolder.getContext().setAuthentication(authToken);
 
-            // Add X-User-Email header for downstream services
+            // Add headers for downstream services
             var modifiedRequest = exchange.getRequest().mutate()
                     .header("X-User-Email", email)
                     .header("X-User-Name", username)
+                    .header("X-User-Roles", String.join(",", roles))
                     .build();
 
             return chain.filter(exchange.mutate().request(modifiedRequest).build());
