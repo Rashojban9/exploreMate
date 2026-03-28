@@ -26,6 +26,7 @@ public class GroupTripService {
     private final GroupTripActivityMapper activityMapper;
     private final GroupTripMessageMapper messageMapper;
     private final GroupTripExpenseMapper expenseMapper;
+    private final KafkaProducerService kafkaProducerService;
 
     // ─── Group Trip CRUD ──────────────────────────────────────────────────────
 
@@ -172,6 +173,11 @@ public class GroupTripService {
         memberRepo.save(member);
 
         int memberCount = (int) memberRepo.countByGroupTripId(trip.getId());
+        
+        // Notify owner
+        kafkaProducerService.sendNotification(trip.getCreatorEmail(), "info", 
+            displayName + " joined your trip: " + trip.getTripName());
+
         return tripMapper.toResponse(trip, memberCount);
     }
 
@@ -250,7 +256,15 @@ public class GroupTripService {
                 .createdAt(Instant.now())
                 .build();
 
-        return activityMapper.toResponse(activityRepo.save(activity));
+        GroupTripActivity saved = activityRepo.save(activity);
+        
+        // Notify owner
+        groupTripRepo.findById(tripId).ifPresent(trip -> {
+            kafkaProducerService.sendNotification(trip.getCreatorEmail(), "info", 
+                userEmail + " proposed a new activity: " + request.getTitle());
+        });
+
+        return activityMapper.toResponse(saved);
     }
 
     public GroupTripActivityResponse voteActivity(UUID tripId, UUID activityId, String userEmail) {
@@ -288,7 +302,13 @@ public class GroupTripService {
                 .orElseThrow(() -> new RuntimeException("Activity not found"));
 
         activity.setStatus("CONFIRMED");
-        return activityMapper.toResponse(activityRepo.save(activity));
+        GroupTripActivity saved = activityRepo.save(activity);
+        
+        // Notify proposer
+        kafkaProducerService.sendNotification(activity.getProposedByEmail(), "success", 
+            "Your activity '" + activity.getTitle() + "' has been confirmed!");
+
+        return activityMapper.toResponse(saved);
     }
 
     public void deleteActivity(UUID tripId, UUID activityId, String userEmail) {

@@ -25,6 +25,13 @@ public class ContentController {
         }
     }
 
+    @GetMapping("/pages")
+    public ResponseEntity<List<PageContentDto>> getAllPublicPages() {
+        return ResponseEntity.ok(contentService.getAllPages().stream()
+                .filter(p -> "Published".equalsIgnoreCase(p.getStatus()))
+                .collect(java.util.stream.Collectors.toList()));
+    }
+
     // Admin endpoints
     @GetMapping("/admin/pages")
     public ResponseEntity<List<PageContentDto>> getAllPages(@RequestHeader("X-User-Roles") String roles) {

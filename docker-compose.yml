@@ -166,6 +166,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - MONGODB_URI=${MONGODB_URI_GROUP_TRIP}
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://service-discovery:8761/eureka/
     env_file:
       - .env

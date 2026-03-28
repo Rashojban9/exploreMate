@@ -59,14 +59,18 @@ spring:
               predicates:
                 - Path=/api/content/**
             - id: notification_api_route
-              uri: lb://notification-service
+              uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8086}
               predicates:
                 - Path=/api/notifications/**
+              filters:
+                - StripPrefix=1
             # Notification WebSocket route
             - id: notification_ws_route
-              uri: lb:ws://notification-service
+              uri: ${NOTIFICATION_WS_URL:ws://localhost:8086}
               predicates:
                 - Path=/ws/notifications/**
+              filters:
+                - StripPrefix=1
             # Legacy routes for service-to-service communication
             - id: auth_public_route
               uri: ${AUTH_SERVICE_URL:http://localhost:8080}

@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SavedItemResponse {
-    private Long id;
+    private String id;
     private String type;
     private String title;
     private String location;

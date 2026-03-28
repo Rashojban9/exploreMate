@@ -26,7 +26,7 @@ public class SavedItemMapper {
 
     public SavedItemResponse toResponse(SavedItem savedItem) {
         return SavedItemResponse.builder()
-                .id(Long.parseLong(savedItem.getId()))
+                .id(savedItem.getId())
                 .type(savedItem.getType())
             .title(savedItem.getTitle())
                 .location(savedItem.getLocation())
