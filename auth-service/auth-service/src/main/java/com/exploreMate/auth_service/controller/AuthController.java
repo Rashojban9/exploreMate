@@ -5,6 +5,7 @@ import com.exploreMate.auth_service.dto.request.SignupReqDto;
 import com.exploreMate.auth_service.dto.request.ProfileUpdateReqDto;
 import com.exploreMate.auth_service.dto.request.ForgotPasswordReqDto;
 import com.exploreMate.auth_service.dto.request.ResetPasswordReqDto;
+import com.exploreMate.auth_service.dto.request.AdminUserUpdateReqDto;
 import com.exploreMate.auth_service.routes.AuthRoute;
 import com.exploreMate.auth_service.service.AuthService;
 import com.exploreMate.auth_service.utils.Response;
@@ -18,6 +19,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -115,6 +118,25 @@ public class AuthController {
         return Response.sucess("All users retrieved successfully", service.getAllUsers());
     }
 
+    @PutMapping(AuthRoute.ADMIN_USER_BY_ID)
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> updateUser(@PathVariable String id, @RequestBody AdminUserUpdateReqDto dto) {
+        return Response.sucess("User updated successfully", service.updateUser(id, dto));
+    }
+
+    @DeleteMapping(AuthRoute.ADMIN_USER_BY_ID)
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> deleteUser(@PathVariable String id) {
+        service.deleteUser(id);
+        return Response.sucess("User deleted successfully", null);
+    }
+
+    @GetMapping(AuthRoute.ADMIN_STATS)
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> getAdminStats() {
+        return Response.sucess("Admin stats retrieved successfully", service.getAdminStats());
+    }
+
     @PostMapping(AuthRoute.FORGOT_PASSWORD)
     public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordReqDto request) {
         String result = service.forgotPassword(request.email());
@@ -128,3 +150,4 @@ public class AuthController {
     }
 
 }
+

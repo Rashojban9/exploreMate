@@ -306,7 +306,66 @@ public class AuthService {
         return "Password reset successfully";
     }
 
+    // ─── Admin: Update User ──────────────────────────────────────────────────
+    public ProfileResponseDto updateUser(String id, com.exploreMate.auth_service.dto.request.AdminUserUpdateReqDto dto) {
+        UserAccount user = repo.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        if (dto.role() != null && !dto.role().isBlank()) {
+            user.setRole(dto.role());
+        }
+        if (dto.enabled() != null) {
+            user.setEnabled(dto.enabled());
+        }
+        if (dto.locked() != null) {
+            user.setLocked(dto.locked());
+        }
+
+        UserAccount updated = repo.save(user);
+
+        return ProfileResponseDto.builder()
+                .id(updated.getId())
+                .email(updated.getEmail())
+                .name(updated.getName())
+                .role(updated.getRole())
+                .numericId(updated.getNumericId())
+                .phoneNumber(updated.getPhoneNumber())
+                .profilePicture(updated.getProfilePicture())
+                .bio(updated.getBio())
+                .location(updated.getLocation())
+                .createdAt(updated.getCreatedAt())
+                .updatedAt(updated.getUpdatedAt())
+                .build();
+    }
+
+    // ─── Admin: Delete User ─────────────────────────────────────────────────
+    public void deleteUser(String id) {
+        if (!repo.existsById(id)) {
+            throw new UsernameNotFoundException("User not found");
+        }
+        repo.deleteById(id);
+    }
+
+    // ─── Admin: Stats ───────────────────────────────────────────────────────
+    public java.util.Map<String, Object> getAdminStats() {
+        List<UserAccount> allUsers = repo.findAll();
+        long totalUsers = allUsers.size();
+        long adminCount = allUsers.stream().filter(u -> "ADMIN".equalsIgnoreCase(u.getRole())).count();
+        long userCount = totalUsers - adminCount;
+        long enabledCount = allUsers.stream().filter(UserAccount::isEnabled).count();
+        long lockedCount = allUsers.stream().filter(UserAccount::isLocked).count();
+
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("totalUsers", totalUsers);
+        stats.put("adminCount", adminCount);
+        stats.put("userCount", userCount);
+        stats.put("enabledCount", enabledCount);
+        stats.put("lockedCount", lockedCount);
+        return stats;
+    }
+
     private String buildPasswordResetEmail(String name, String token) {
         return "<html><body style='font-family: Arial, sans-serif; padding: 20px;'><h2>Password Reset Request</h2><p>Hello " + name + ",</p><p>We received a request to reset your ExploreMate password.</p><p>Click the button below to reset your password:</p><a href='" + frontendUrl + "/reset-password?token=" + token + "' style='background-color: #008CBA; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 20px 0;'>Reset Password</a><p>Or copy this token: " + token + "</p><p>This link will expire in 1 hour.</p><p>If you didn't request this, please ignore this email.</p><p>Best regards,<br>ExploreMate Team</p></body></html>";
     }
 }
+
