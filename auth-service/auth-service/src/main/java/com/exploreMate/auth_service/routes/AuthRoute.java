@@ -16,5 +16,6 @@ public class AuthRoute {
     public static final String ADMIN_SIGN_UP = ADMIN_BASE + "/signup";
     public static final String ADMIN_USERS = ADMIN_BASE + "/users";
     public static final String ADMIN_USER_BY_ID = ADMIN_BASE + "/users/{id}";
+    public static final String ADMIN_RESET_PASSWORD = ADMIN_BASE + "/users/{id}/reset-password";
     public static final String ADMIN_STATS = ADMIN_BASE + "/stats";
 }

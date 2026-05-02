@@ -78,10 +78,20 @@ public class ContentService {
                 .count();
         long draftCount = totalPages - publishedCount;
 
+        List<MediaItem> allMedia = mediaRepository.findAll();
+        long totalMedia = allMedia.size();
+        long liveMediaCount = allMedia.stream()
+                .filter(m -> "Live".equalsIgnoreCase(m.getStatus()))
+                .count();
+        long archivedMediaCount = totalMedia - liveMediaCount;
+
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalPages", totalPages);
         stats.put("publishedCount", publishedCount);
         stats.put("draftCount", draftCount);
+        stats.put("totalMedia", totalMedia);
+        stats.put("liveMediaCount", liveMediaCount);
+        stats.put("archivedMediaCount", archivedMediaCount);
         return stats;
     }
 
@@ -122,6 +132,11 @@ public class ContentService {
 
     public void deleteMedia(String id) {
         mediaRepository.deleteById(id);
+    }
+
+    public void deleteAllContent() {
+        repository.deleteAll();
+        mediaRepository.deleteAll();
     }
 
     private PageContentDto mapToDto(PageContent page) {

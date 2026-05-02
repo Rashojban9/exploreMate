@@ -26,6 +26,8 @@ public class ProfileResponseDto {
     private java.util.List<String> interests;
     private Integer budget;
     private String travelStyle;
+    private boolean enabled;
+    private boolean locked;
     private Instant createdAt;
     private Instant updatedAt;
 }

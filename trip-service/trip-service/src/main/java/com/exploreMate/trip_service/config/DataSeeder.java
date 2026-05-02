@@ -19,6 +19,7 @@ public class DataSeeder {
     @Bean
     public CommandLineRunner initTrips(TripRepository tripRepo, SavedItemRepository savedRepo) {
         return args -> {
+          try {
             String demoEmail = "admin@exploremate.app";
 
             if (tripRepo.count() == 0) {
@@ -79,6 +80,9 @@ public class DataSeeder {
                 savedRepo.saveAll(items);
                 System.out.println("Seeded initial saved items for " + demoEmail);
             }
+          } catch (Exception e) {
+                System.out.println("WARNING: Could not seed trip data (MongoDB may still be connecting): " + e.getMessage());
+          }
         };
     }
 }

@@ -81,9 +81,19 @@ public class AuthService {
         }
 
         UserAccount user = mapper.toEntity(signupReqDto);
+        String displayName = (signupReqDto.getName() != null && !signupReqDto.getName().isBlank())
+                ? signupReqDto.getName()
+                : "Explorer";
+        user.setName(displayName);
+        user.setTitle("Explorer");
         user.setPasswordHash(passwordEncoder.encode(signupReqDto.getPassword()));
-        user.setRole("ADMIN");
+        // Accept role from request; default to USER if not provided
+        String requestedRole = (signupReqDto.getRole() != null && !signupReqDto.getRole().isBlank())
+                ? signupReqDto.getRole().toUpperCase()
+                : "USER";
+        user.setRole(requestedRole);
         user.setNumericId(System.currentTimeMillis() + (long) (Math.random() * 10000));
+        user.setEnabled(true);
 
         UserAccount savedUser = repo.save(user);
 
@@ -209,8 +219,14 @@ public class AuthService {
                         .phoneNumber(user.getPhoneNumber())
                         .profilePicture(user.getProfilePicture())
                         .bio(user.getBio())
+                        .title(user.getTitle())
                         .location(user.getLocation())
                         .dateOfBirth(user.getDateOfBirth())
+                        .interests(user.getInterests())
+                        .budget(user.getBudget())
+                        .travelStyle(user.getTravelStyle())
+                        .enabled(user.isEnabled())
+                        .locked(user.isLocked())
                         .createdAt(user.getCreatedAt())
                         .updatedAt(user.getUpdatedAt())
                         .build())
@@ -332,7 +348,14 @@ public class AuthService {
                 .phoneNumber(updated.getPhoneNumber())
                 .profilePicture(updated.getProfilePicture())
                 .bio(updated.getBio())
+                .title(updated.getTitle())
                 .location(updated.getLocation())
+                .dateOfBirth(updated.getDateOfBirth())
+                .interests(updated.getInterests())
+                .budget(updated.getBudget())
+                .travelStyle(updated.getTravelStyle())
+                .enabled(updated.isEnabled())
+                .locked(updated.isLocked())
                 .createdAt(updated.getCreatedAt())
                 .updatedAt(updated.getUpdatedAt())
                 .build();
@@ -344,6 +367,14 @@ public class AuthService {
             throw new UsernameNotFoundException("User not found");
         }
         repo.deleteById(id);
+    }
+
+    // ─── Admin: Reset User Password ─────────────────────────────────────────
+    public void adminResetPassword(String id, String newPassword) {
+        UserAccount user = repo.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        repo.save(user);
     }
 
     // ─── Admin: Stats ───────────────────────────────────────────────────────

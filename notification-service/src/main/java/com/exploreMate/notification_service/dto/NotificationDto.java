@@ -14,6 +14,7 @@ public class NotificationDto {
     private String id;
     private String userEmail;
     private String type;
+    private String title;
     private String message;
     private boolean read;
     private Instant createdAt;

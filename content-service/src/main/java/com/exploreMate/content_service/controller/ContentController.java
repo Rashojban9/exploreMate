@@ -125,4 +125,14 @@ public class ContentController {
         contentService.deleteMedia(id);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/admin/all")
+    public ResponseEntity<Void> deleteAllContent(
+            @RequestHeader(value = "X-User-Roles", required = false) String roles) {
+        if (roles == null || !roles.contains("ADMIN")) {
+            return ResponseEntity.status(403).build();
+        }
+        contentService.deleteAllContent();
+        return ResponseEntity.noContent().build();
+    }
 }

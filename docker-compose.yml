@@ -42,6 +42,7 @@ services:
   # Auth Service
   auth-service:
     build: ./auth-service/auth-service
+    restart: on-failure
     dns: 8.8.8.8
     ports:
       - "8080:8080"
@@ -65,6 +66,7 @@ services:
   # Trip Service
   trip-service:
     build: ./trip-service/trip-service
+    restart: on-failure
     dns: 8.8.8.8
     ports:
       - "8083:8083"
@@ -138,6 +140,7 @@ services:
   # AI Service (Groq API - fast, free GPU)
   ai-service:
     build: ./ai-service/ai-service
+    restart: on-failure
     dns: 8.8.8.8
     env_file:
       - .env
@@ -160,6 +163,7 @@ services:
   # Group Trip Service
   group-trip-service:
     build: ./group-trip-service
+    restart: on-failure
     dns: 8.8.8.8
     ports:
       - "8084:8084"
@@ -180,6 +184,7 @@ services:
   # QR Guide Service
   qr-guide-service:
     build: ./qr-guide-service
+    restart: on-failure
     dns: 8.8.8.8
     ports:
       - "8085:8085"
@@ -199,6 +204,7 @@ services:
   # Notification Service
   notification-service:
     build: ./notification-service
+    restart: on-failure
     dns: 8.8.8.8
     env_file:
       - .env
@@ -219,6 +225,7 @@ services:
   # Content Service
   content-service:
     build: ./content-service
+    restart: on-failure
     dns: 8.8.8.8
     ports:
       - "8087:8087"

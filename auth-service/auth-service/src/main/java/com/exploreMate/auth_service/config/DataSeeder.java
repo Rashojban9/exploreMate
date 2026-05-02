@@ -13,19 +13,24 @@ public class DataSeeder {
     @Bean
     public CommandLineRunner initAdminUser(AuthRepo repo, PasswordEncoder passwordEncoder) {
         return args -> {
-            if (repo.findByEmail("admin@exploremate.app").isEmpty()) {
-                UserAccount admin = new UserAccount();
-                admin.setName("Super Admin");
-                admin.setEmail("admin@exploremate.app");
-                admin.setPasswordHash(passwordEncoder.encode("Password@123"));
-                admin.setRole("ADMIN");
-                admin.setTitle("System Administrator");
-                admin.setNumericId(System.currentTimeMillis() + (long) (Math.random() * 10000));
-                
-                repo.save(admin);
-                System.out.println("==========================================================");
-                System.out.println("DEFAULT ADMIN CREATED: admin@exploremate.app / Password@123");
-                System.out.println("==========================================================");
+            try {
+                if (repo.findByEmail("admin@exploremate.app").isEmpty()) {
+                    UserAccount admin = new UserAccount();
+                    admin.setName("Super Admin");
+                    admin.setEmail("admin@exploremate.app");
+                    admin.setPasswordHash(passwordEncoder.encode("Password@123"));
+                    admin.setRole("ADMIN");
+                    admin.setTitle("System Administrator");
+                    admin.setNumericId(System.currentTimeMillis() + (long) (Math.random() * 10000));
+
+                    repo.save(admin);
+                    System.out.println("==========================================================");
+                    System.out.println("DEFAULT ADMIN CREATED: admin@exploremate.app / Password@123");
+                    System.out.println("==========================================================");
+                }
+            } catch (Exception e) {
+                System.out.println("WARNING: Could not seed admin user (MongoDB may still be connecting): " + e.getMessage());
+                System.out.println("The admin user will be created on the next successful startup.");
             }
         };
     }

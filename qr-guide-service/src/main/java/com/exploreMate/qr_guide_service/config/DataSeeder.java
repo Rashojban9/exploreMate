@@ -14,6 +14,7 @@ public class DataSeeder {
     @Bean
     public CommandLineRunner initArtifacts(QrArtifactRepository repository) {
         return args -> {
+          try {
             if (repository.count() == 0) {
                 QrArtifact artifact = QrArtifact.builder()
                     .id("artifact-1")
@@ -30,6 +31,9 @@ public class DataSeeder {
                 
                 System.out.println("Seeded artifact-1 in QR Guide Service");
             }
+          } catch (Exception e) {
+                System.out.println("WARNING: Could not seed QR data (MongoDB may still be connecting): " + e.getMessage());
+          }
         };
     }
 }

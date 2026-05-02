@@ -16,6 +16,7 @@ public class DataSeeder {
     @Bean
     public CommandLineRunner initContent(PageContentRepository repository) {
         return args -> {
+          try {
             if (repository.count() == 0) {
                 // 1. Seed Blog Posts
                 seedBlogPost(repository, 
@@ -48,6 +49,9 @@ public class DataSeeder {
 
                 System.out.println("Seeded initial content in Content Service");
             }
+          } catch (Exception e) {
+                System.out.println("WARNING: Could not seed content data (MongoDB may still be connecting): " + e.getMessage());
+          }
         };
     }
 

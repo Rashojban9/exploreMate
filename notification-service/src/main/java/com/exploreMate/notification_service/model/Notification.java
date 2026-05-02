@@ -24,6 +24,8 @@ public class Notification {
     // Type of notification: 'info', 'success', 'warning', 'error'
     private String type;
     
+    private String title;
+    
     private String message;
     
     @Builder.Default

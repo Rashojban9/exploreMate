@@ -36,7 +36,13 @@ public class AuthController {
 
     @PostMapping(AuthRoute.SIGN_IN)
     public ResponseEntity<?> signIn(@RequestBody SigninReqDto signinReqDto) {
-        return Response.sucess("Successfully signed in", service.signin(signinReqDto));
+        System.out.println("Processing login request for: " + signinReqDto.email());
+        try {
+            return Response.sucess("Successfully signed in", service.signin(signinReqDto));
+        } catch (Exception e) {
+            System.err.println("Login error for " + signinReqDto.email() + ": " + e.getMessage());
+            throw e; // Let GlobalExceptionHandler handle it
+        }
     }
 
     @GetMapping(AuthRoute.ME)
@@ -129,6 +135,17 @@ public class AuthController {
     public ResponseEntity<?> deleteUser(@PathVariable String id) {
         service.deleteUser(id);
         return Response.sucess("User deleted successfully", null);
+    }
+
+    @PutMapping(AuthRoute.ADMIN_RESET_PASSWORD)
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<?> adminResetPassword(@PathVariable String id, @RequestBody java.util.Map<String, String> body) {
+        String newPassword = body.get("newPassword");
+        if (newPassword == null || newPassword.length() < 6) {
+            return ResponseEntity.badRequest().body(Response.error("Password must be at least 6 characters"));
+        }
+        service.adminResetPassword(id, newPassword);
+        return Response.sucess("Password reset successfully", null);
     }
 
     @GetMapping(AuthRoute.ADMIN_STATS)

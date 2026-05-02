@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -23,10 +24,27 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.getUserNotifications(userEmail));
     }
 
+    @GetMapping("/unread-count")
+    public ResponseEntity<Map<String, Long>> getUnreadCount(@RequestHeader("X-User-Email") String userEmail) {
+        if (userEmail == null || userEmail.isEmpty()) {
+            return ResponseEntity.status(401).build();
+        }
+        long count = notificationService.getUnreadCount(userEmail);
+        return ResponseEntity.ok(Map.of("count", count));
+    }
+
     @PutMapping("/{id}/read")
     public ResponseEntity<Void> markAsRead(@PathVariable String id, @RequestHeader("X-User-Email") String userEmail) {
-        // Technically should verify ownership, but ID is UUID
         notificationService.markAsRead(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/read-all")
+    public ResponseEntity<Void> markAllAsRead(@RequestHeader("X-User-Email") String userEmail) {
+        if (userEmail == null || userEmail.isEmpty()) {
+            return ResponseEntity.status(401).build();
+        }
+        notificationService.markAllAsRead(userEmail);
         return ResponseEntity.ok().build();
     }
 
@@ -42,7 +60,17 @@ public class NotificationController {
         return ResponseEntity.ok().build();
     }
 
-    // For manual testing/admin
+    @PostMapping
+    public ResponseEntity<NotificationDto> createNotification(
+            @RequestHeader("X-User-Email") String userEmail,
+            @RequestBody Map<String, String> body) {
+        String type = body.getOrDefault("type", "info");
+        String title = body.getOrDefault("title", "");
+        String message = body.getOrDefault("message", "You have a new notification");
+        return ResponseEntity.ok(notificationService.createNotification(userEmail, type, title, message));
+    }
+
+    // For manual testing/admin (legacy endpoint kept for backwards compatibility)
     @PostMapping("/test")
     public ResponseEntity<NotificationDto> createTestNotification(
             @RequestParam String email,
